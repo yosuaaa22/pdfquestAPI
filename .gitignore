@@ -1,0 +1,17 @@
+# File dan folder spesifik dari build .NET
+**/[Bb]in/
+**/[Oo]bj/
+
+# File yang dibuat oleh IDE (Visual Studio, VS Code, Rider)
+.vs/
+.vscode/
+*.suo
+*.user
+*.sln.docstates
+
+# File sistem operasi
+*.DS_Store
+Thumbs.db
+
+# SANGAT PENTING: Abaikan file environment yang berisi rahasia
+.env

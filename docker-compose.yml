@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Layanan untuk Aplikasi .NET 8
+  api:
+    container_name: pdfquest-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Map port http
+      - "8081:8081" # Map port https
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:8081;http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=db;Database=PdfQuestDB;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
+    depends_on:
+      - db
+    restart: on-failure
+
+  # Layanan untuk Database SQL Server
+  db:
+    container_name: pdfquest-db
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "1433:1433" # Map port SQL Server (opsional)
+    restart: unless-stopped
+
+volumes:
+  db_data:

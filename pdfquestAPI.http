@@ -1,0 +1,6 @@
+@pdfquestAPI_HostAddress = http://localhost:5118
+
+GET {{pdfquestAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
