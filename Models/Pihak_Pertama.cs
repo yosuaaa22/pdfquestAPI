@@ -11,13 +11,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
         [Required]
         [Column("nomor_nib_pihak_pertama")]
-        public string NomorNibPihakPertama { get; set; }
+        public required  string NomorNibPihakPertama { get; set; }
 
         [Required]
         [Column("nama_perwakilan_pihak_pertama")]
-        public string NamaPerwakilanPihakPertama { get; set; }
+        public required  string NamaPerwakilanPihakPertama { get; set; }
 
         [Required]
         [Column("jabatan_perwakilan_pihak_pertama")]
-        public string JabatanPerwakilanPihakPertama { get; set; }
+        public required  string JabatanPerwakilanPihakPertama { get; set; }
     }

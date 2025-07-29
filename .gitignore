@@ -15,3 +15,5 @@ Thumbs.db
 
 # SANGAT PENTING: Abaikan file environment yang berisi rahasia
 .env
+docker-compose.yml
+.certs/aspnetapp.pfx

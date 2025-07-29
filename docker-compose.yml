@@ -14,6 +14,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:8081;http://+:8080
       - ConnectionStrings__DefaultConnection=Server=db;Database=PdfQuestDB;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
+      # Menambahkan konfigurasi untuk sertifikat HTTPS
+      - Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - Kestrel__Certificates__Default__Password=${CERT_PASSWORD}
+    volumes:
+      # Memasukkan file sertifikat dari host ke dalam container
+      - ./.certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     depends_on:
       - db
     restart: on-failure
@@ -31,3 +37,4 @@ services:
 
 volumes:
   db_data:
+
