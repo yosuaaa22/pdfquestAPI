@@ -10,6 +10,7 @@
     <!-- DIHAPUS: <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.7" /> -->
 
     <!-- DITAMBAHKAN: Paket yang benar untuk Swagger di .NET 8 -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
 
     <PackageReference Include="QuestPDF" Version="2024.3.4" />
