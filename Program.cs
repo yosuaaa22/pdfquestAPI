@@ -1,15 +1,21 @@
+
+using Microsoft.EntityFrameworkCore;
+using pdfquestAPI.Data;
+using pdfquestAPI.Interfaces;
+using pdfquestAPI.Repositories;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Menambahkan layanan untuk Swagger/OpenAPI
-// Ini adalah metode yang benar untuk template standar
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddControllers();
-
 var app = builder.Build();
 
-// 2. Mengaktifkan middleware Swagger (biasanya hanya di mode Development)
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
