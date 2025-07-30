@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace pdfquestAPI.Models
 {
-    [Table("jdul_isi")]
+    [Table("judul_isi")]
     public class JudulIsi
     {
         [Key]
