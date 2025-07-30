@@ -1,4 +1,6 @@
 using pdfquestAPI.Interfaces;
+using pdfquestAPI.Models;
+using pdfquestAPI.Dtos;
 
 public class PihakPertamaService : IPihakPertamaService
     {
