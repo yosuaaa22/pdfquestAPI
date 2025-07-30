@@ -1,8 +1,7 @@
+
+namespace pdfquestAPI.Dtos;
 using System.ComponentModel.DataAnnotations;
 
-namespace pdfquestAPI.Dtos
-{
-    // DTO untuk membuat entitas PenyediaLayanan baru
     public class CreatePenyediaLayananDto
     {
         [Required]
@@ -36,4 +35,4 @@ namespace pdfquestAPI.Dtos
         [Required]
         public required  string JenisNpwp { get; set; }
     }
-}
+

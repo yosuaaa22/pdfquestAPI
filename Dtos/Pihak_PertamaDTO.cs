@@ -1,3 +1,5 @@
+namespace pdfquestAPI.Dtos;
+
 using System.ComponentModel.DataAnnotations;
 
  public class CreatePihakPertamaDto
