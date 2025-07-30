@@ -26,6 +26,7 @@ builder.Services.AddScoped<IPerjanjianService, PerjanjianService>();
 builder.Services.AddScoped<IJudulIsiService, JudulIsiService>();
 builder.Services.AddScoped<ISubBabKetentuanKhususService, SubBabKetentuanKhususService>();
 builder.Services.AddScoped<IPoinKetentuanKhususService, PoinKetentuanKhususService>();
+builder.Services.AddScoped<IPdfService, PdfService>();
 // Jika Anda membuat service baru, daftarkan di sini.
 
 // Menambahkan layanan dasar untuk API, seperti Controller dan Swagger.
