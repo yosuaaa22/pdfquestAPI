@@ -1,10 +1,9 @@
-namespace pdfquestAPI.Dtos.JudulIsi // <-- PASTIKAN NAMESPACE INI BENAR
+namespace pdfquestAPI.Dtos.JudulIsi
 {
-    // PASTIKAN NAMA CLASS INI BENAR
     public class JudulIsiDto
     {
         public int Id { get; set; }
-        public int IdJenisPenyedia { get; set; }
+        public int? IdPenyedia { get; set; } // Menggunakan int? agar bisa null
         public string? JudulTeks { get; set; }
         public int UrutanTampil { get; set; }
     }

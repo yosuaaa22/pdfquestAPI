@@ -1,12 +1,11 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace pdfquestAPI.Dtos.JudulIsi // <-- PASTIKAN NAMESPACE INI BENAR
+namespace pdfquestAPI.Dtos.JudulIsi
 {
-    // PASTIKAN NAMA CLASS INI BENAR
-    public class CreateJudulIsiDto 
+    using System.ComponentModel.DataAnnotations;
+
+    public class CreateJudulIsiDto
     {
         [Required]
-        public int IdJenisPenyedia { get; set; }
+        public int IdPenyedia { get; set; }
 
         [Required]
         [MaxLength(255)]

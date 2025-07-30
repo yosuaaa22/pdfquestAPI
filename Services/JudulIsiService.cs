@@ -1,9 +1,9 @@
-using pdfquestAPI.Dtos.JudulIsi;
-using pdfquestAPI.Interfaces;
-using pdfquestAPI.Models;
-
 namespace pdfquestAPI.Services
 {
+    using pdfquestAPI.Dtos.JudulIsi;
+    using pdfquestAPI.Interfaces;
+    using pdfquestAPI.Models;
+
     public class JudulIsiService : IJudulIsiService
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -17,11 +17,10 @@ namespace pdfquestAPI.Services
         {
             var judulIsiList = await _unitOfWork.JudulIsi.GetAllAsync();
             
-            // Mapping dari Model ke DTO
             return judulIsiList.Select(j => new JudulIsiDto
             {
                 Id = j.Id,
-                IdJenisPenyedia = j.IdJenisPenyedia,
+                IdPenyedia = j.IdPenyedia, // SUDAH BENAR
                 JudulTeks = j.JudulTeks,
                 UrutanTampil = j.UrutanTampil
             });
@@ -32,14 +31,13 @@ namespace pdfquestAPI.Services
             var judulIsi = await _unitOfWork.JudulIsi.GetByIdAsync(id);
             if (judulIsi == null)
             {
-                // Controller akan menangani exception ini sebagai 404 Not Found
                 throw new KeyNotFoundException($"JudulIsi dengan ID {id} tidak ditemukan.");
             }
 
             return new JudulIsiDto
             {
                 Id = judulIsi.Id,
-                IdJenisPenyedia = judulIsi.IdJenisPenyedia,
+                IdPenyedia = judulIsi.IdPenyedia, // SUDAH BENAR
                 JudulTeks = judulIsi.JudulTeks,
                 UrutanTampil = judulIsi.UrutanTampil
             };
@@ -49,7 +47,7 @@ namespace pdfquestAPI.Services
         {
             var newJudulIsi = new JudulIsi
             {
-                IdJenisPenyedia = createDto.IdJenisPenyedia,
+                IdPenyedia = createDto.IdPenyedia, // SUDAH BENAR
                 JudulTeks = createDto.JudulTeks,
                 UrutanTampil = createDto.UrutanTampil
             };
@@ -57,7 +55,6 @@ namespace pdfquestAPI.Services
             await _unitOfWork.JudulIsi.AddAsync(newJudulIsi);
             await _unitOfWork.CompleteAsync();
 
-            // Kembalikan data yang baru dibuat sebagai DTO
             return await GetByIdAsync(newJudulIsi.Id);
         }
 
@@ -69,8 +66,7 @@ namespace pdfquestAPI.Services
                 throw new KeyNotFoundException($"JudulIsi dengan ID {id} tidak ditemukan.");
             }
 
-            // Update properti
-            judulIsiToUpdate.IdJenisPenyedia = updateDto.IdJenisPenyedia;
+            judulIsiToUpdate.IdPenyedia = updateDto.IdPenyedia; // SUDAH BENAR
             judulIsiToUpdate.JudulTeks = updateDto.JudulTeks;
             judulIsiToUpdate.UrutanTampil = updateDto.UrutanTampil;
 
