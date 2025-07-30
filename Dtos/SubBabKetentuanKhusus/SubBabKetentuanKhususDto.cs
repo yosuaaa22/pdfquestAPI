@@ -1,11 +1,10 @@
-// In Models/DTOs/SubBabKetentuanKhususDto.cs
-namespace pdfquestAPI.Models.DTOs
+namespace pdfquestAPI.Dtos.SubBabKetentuanKhusus
 {
     public class SubBabKetentuanKhususDto
     {
         public int Id { get; set; }
+        public int IdJudul { get; set; }
         public string? Konten { get; set; }
         public int UrutanTampil { get; set; }
-        public List<PoinKetentuanKhususDto> Poin { get; set; } = new();
     }
 }

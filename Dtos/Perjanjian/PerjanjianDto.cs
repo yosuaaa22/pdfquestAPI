@@ -1,16 +1,14 @@
-// In Models/DTOs/PerjanjianDto.cs
-namespace pdfquestAPI.Models.DTOs
+namespace pdfquestAPI.Dtos.Perjanjian
 {
     public class PerjanjianDto
     {
-        // Data dari tabel Perjanjian
         public int IdPerjanjian { get; set; }
+        public int IdPenyedia { get; set; }
         public string? NoPtInhealth { get; set; }
         public string? NoPtPihakKedua { get; set; }
         public DateTime TanggalTandaTangan { get; set; }
         public string? NomorBeritaAcara { get; set; }
-
-        // Data gabungan yang sudah siap pakai
-        public List<JudulIsiDto> DaftarIsi { get; set; } = new();
+        public DateTime TanggalBeritaAcara { get; set; }
+        public string? JangkaWaktuPerjanjian { get; set; }
     }
 }
