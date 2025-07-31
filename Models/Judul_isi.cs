@@ -13,8 +13,8 @@ namespace pdfquestAPI.Models
         public int Id { get; set; }
 
         // GANTI NAMA PROPERTI INI
-        [Column("id_penyedia")] 
-        public int? IdPenyedia { get; set; } 
+        [Column("id_penyedia")]
+        public int? IdPenyedia { get; set; }
 
         [Column("judul_teks")]
         public string? JudulTeks { get; set; }
@@ -25,5 +25,8 @@ namespace pdfquestAPI.Models
         // OPSIONAL TAPI SANGAT DIREKOMENDASIKAN: Tambahkan Navigation Property
         [ForeignKey("IdPenyedia")]
         public virtual PenyediaLayanan? PenyediaLayanan { get; set; }
+        
+        // public virtual ICollection<SubBabKetentuanKhusus> SubBabKetentuanKhusus { get; set; } = new List<SubBabKetentuanKhusus>();
+
     }
 }
