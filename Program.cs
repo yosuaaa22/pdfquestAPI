@@ -4,6 +4,7 @@ using pdfquestAPI.Data;
 using pdfquestAPI.Interfaces;
 using pdfquestAPI.Repositories;
 using pdfquestAPI.Services;
+using QuestPDF.Infrastructure;
 
 // 1. Membuat WebApplicationBuilder
 // Ini adalah langkah awal untuk mengonfigurasi aplikasi web Anda.
@@ -30,6 +31,8 @@ builder.Services.AddScoped<IPdfService, PdfService>();
 // Jika Anda membuat service baru, daftarkan di sini.
 
 // Menambahkan layanan dasar untuk API, seperti Controller dan Swagger.
+QuestPDF.Settings.License = LicenseType.Community;
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // Diperlukan untuk API explorer
 builder.Services.AddSwaggerGen(); // Untuk dokumentasi API interaktif
