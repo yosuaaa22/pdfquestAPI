@@ -2,104 +2,112 @@ using Microsoft.EntityFrameworkCore;
 using pdfquestAPI.Documents;
 using pdfquestAPI.Documents.Models;
 using pdfquestAPI.Interfaces;
+using pdfquestAPI.Models; // Pastikan namespace untuk model DB Anda sudah benar
 using QuestPDF.Fluent;
- 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+
 namespace pdfquestAPI.Services
 {
     public class PdfService : IPdfService
     {
         private readonly IUnitOfWork _unitOfWork;
-        // Kita butuh DbContext langsung untuk query yang lebih kompleks (Include)
         private readonly Data.ApplicationDbContext _context;
- 
+
         public PdfService(IUnitOfWork unitOfWork, Data.ApplicationDbContext context)
         {
             _unitOfWork = unitOfWork;
             _context = context;
         }
- 
+
         public async Task<byte[]> GeneratePerjanjianPdfAsync(int perjanjianId)
         {
-            // 1. Mengambil semua data yang dibutuhkan dalam satu query efisien
             var model = await BuildPerjanjianModelAsync(perjanjianId);
- 
-            // 2. Membuat dokumen QuestPDF dengan data yang sudah disiapkan
             var document = new PerjanjianDocument(model);
- 
-            // 3. Menghasilkan PDF menjadi byte array
             byte[] pdfBytes = document.GeneratePdf();
- 
             return pdfBytes;
         }
- 
+
         private async Task<PerjanjianDocumentModel> BuildPerjanjianModelAsync(int perjanjianId)
         {
-            // Ambil data Perjanjian utama
-            var perjanjian = await _unitOfWork.Perjanjian.GetByIdAsync(perjanjianId);
-            if (perjanjian == null)
-                throw new KeyNotFoundException("Perjanjian tidak ditemukan.");
- 
-            // Ambil data Pihak Kedua (Penyedia Layanan)
-            var pihakKedua = await _unitOfWork.PenyediaLayanan.GetByIdAsync(perjanjian.IdPenyedia);
-            if (pihakKedua == null)
-                throw new KeyNotFoundException("Penyedia Layanan tidak ditemukan.");
- 
-            // Asumsi Pihak Pertama hanya ada satu, ambil yang pertama.
-            // Jika ada relasi, sesuaikan query ini.
-            var pihakPertama = (await _unitOfWork.PihakPertama.GetAllAsync()).FirstOrDefault();
-            if (pihakPertama == null)
-                throw new KeyNotFoundException("Data Pihak Pertama tidak ditemukan.");
- 
-            // Ambil data hierarkis untuk Ketentuan Khusus
-            var ketentuanKhusus = await GetKetentuanKhususAsync();
- 
-            // Gabungkan semua data ke dalam model dokumen
+            var perjanjian = await _unitOfWork.Perjanjian.GetByIdAsync(perjanjianId)
+                ?? throw new KeyNotFoundException("Perjanjian tidak ditemukan.");
+
+            var pihakKedua = await _unitOfWork.PenyediaLayanan.GetByIdAsync(perjanjian.IdPenyedia)
+                ?? throw new KeyNotFoundException("Penyedia Layanan tidak ditemukan.");
+
+            var pihakPertama = (await _unitOfWork.PihakPertama.GetAllAsync()).FirstOrDefault()
+                ?? throw new KeyNotFoundException("Data Pihak Pertama tidak ditemukan.");
+
+            // Mengambil data Ketentuan Khusus (yang BUKAN Lampiran)
+            var ketentuanKhusus = await GetHierarchicalDataAsync(p => !p.JudulTeks.StartsWith("LAMPIRAN"));
+
+            // Mengambil data Lampiran
+            var lampiran = await GetHierarchicalDataAsync(p => p.JudulTeks.StartsWith("LAMPIRAN"));
+
             return new PerjanjianDocumentModel
             {
                 Perjanjian = perjanjian,
                 PihakPertama = pihakPertama,
                 PihakKedua = pihakKedua,
-                KetentuanKhusus = ketentuanKhusus
+                KetentuanKhusus = ketentuanKhusus,
+                Lampiran = lampiran
             };
         }
- 
-        private async Task<List<BabModel>> GetKetentuanKhususAsync()
+
+        // PERBAIKAN: Metode ini disesuaikan untuk menghindari error kompilasi.
+        private async Task<List<BabModel>> GetHierarchicalDataAsync(Expression<Func<JudulIsi, bool>> filter)
         {
-            // Ambil semua data dari DB
-            var allBab = await _context.JudulIsi.OrderBy(j => j.UrutanTampil).ToListAsync();
-            var allSubBab = await _context.SubBabKetentuanKhusus.OrderBy(s => s.UrutanTampil).ToListAsync();
-            var allPoin = await _context.PoinKetentuanKhusus.OrderBy(p => p.UrutanTampil).ToListAsync();
- 
-            // Bangun struktur hierarkis di memori
+            var allBab = await _context.JudulIsi.Where(filter).OrderBy(j => j.UrutanTampil).ToListAsync();
+            if (!allBab.Any()) return new List<BabModel>();
+
+            var allBabIds = allBab.Select(b => b.Id).ToList();
+
+            var allSubBab = await _context.SubBabKetentuanKhusus
+                .Where(s => allBabIds.Contains(s.IdJudul))
+                .OrderBy(s => s.UrutanTampil).ToListAsync();
+            
+            var allSubBabIds = allSubBab.Select(s => s.Id).ToList();
+
+            // PERBAIKAN: Query ini diubah untuk menghindari penggunaan .HasValue pada tipe 'int'.
+            // Cara ini lebih aman dan tetap efisien.
+            var allPoin = await _context.PoinKetentuanKhusus
+                .Where(p => allSubBabIds.Contains(p.IdSubBab)) // Langsung cek containment.
+                .OrderBy(p => p.UrutanTampil).ToListAsync();
+
             var babList = allBab.Select(bab => new BabModel
             {
-                JudulTeks = bab.JudulTeks,
+                JudulTeks = bab.JudulTeks ?? string.Empty,
                 UrutanTampil = bab.UrutanTampil,
                 SubBab = allSubBab
                     .Where(sb => sb.IdJudul == bab.Id)
                     .Select(sb => new SubBabModel
                     {
-                        Konten = sb.Konten,
+                        Konten = sb.Konten ?? string.Empty,
                         UrutanTampil = sb.UrutanTampil,
+                        // Menggunakan daftar 'allPoin' yang sudah diambil sebelumnya untuk efisiensi.
                         Poin = BuildPoinTree(allPoin.Where(p => p.IdSubBab == sb.Id).ToList(), null)
                     }).ToList()
             }).ToList();
- 
+
             return babList;
         }
- 
-        // Fungsi rekursif untuk membangun pohon poin (jika ada poin di dalam poin)
-        private List<PoinModel> BuildPoinTree(List<pdfquestAPI.Models.PoinKetentuanKhusus> allPoin, int? parentId)
+
+        private List<PoinModel> BuildPoinTree(List<PoinKetentuanKhusus> allPoinForSubBab, int? parentId)
         {
-            return allPoin
+            return allPoinForSubBab
                 .Where(p => p.Parent == parentId)
+                .OrderBy(p => p.UrutanTampil)
                 .Select(p => new PoinModel
                 {
                     Id = p.Id,
                     ParentId = p.Parent,
-                    TeksPoin = p.TeksPoin,
+                    TeksPoin = p.TeksPoin ?? string.Empty,
                     UrutanTampil = p.UrutanTampil,
-                    SubPoin = BuildPoinTree(allPoin, p.Id)
+                    SubPoin = BuildPoinTree(allPoinForSubBab, p.Id)
                 }).ToList();
         }
     }
