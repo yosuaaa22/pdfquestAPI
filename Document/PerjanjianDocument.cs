@@ -2245,36 +2245,65 @@ namespace pdfquestAPI.Documents
         }
 
         void RenderTabelBiasa(ColumnDescriptor column, string teks)
+{
+    column.Item().PaddingTop(10).PaddingBottom(10).Table(table =>
+    {
+        var headers = teks.Replace("[TABLE]", "").Replace("[/TABLE]", "").Split('|');
+
+        table.ColumnsDefinition(columns =>
         {
-            column.Item().PaddingTop(10).Table(table =>
+            if (teks.Contains("Jenis Tindakan Medis"))
             {
-                var headers = teks.Replace("[TABLE]", "").Replace("[/TABLE]", "").Split('|');
-                table.ColumnsDefinition(columns =>
+                columns.ConstantColumn(40);
+                columns.RelativeColumn(3);
+                columns.RelativeColumn(2);
+                columns.RelativeColumn(2.5f);
+            }
+            else
+            {
+                foreach (var _ in headers)
                 {
-                    foreach (var _ in headers) columns.RelativeColumn();
-                });
-
-                foreach (var header in headers)
-                {
-                    table.Cell().Border(1).Padding(5).Text(header).Bold();
+                    columns.RelativeColumn();
                 }
+            }
+        });
 
-                if (teks.Contains("Jenis PIC"))
-                {
-                    var dataRows = new List<string[]>
-                    {
-                        new[] { "Medis", "", "", "" },
-                        new[] { "Farmasi", "", "", "" },
-                        new[] { "Keuangan", "", "", "" },
-                        new[] { "Marketing (HLO)", "", "", "" }
-                    };
-                    foreach (var row in dataRows)
-                    {
-                        foreach (var cellText in row) table.Cell().Border(1).Padding(5).Text(cellText);
-                    }
-                }
-            });
+        foreach (var header in headers)
+        {
+            // --- PERBAIKAN DI BARIS INI ---
+            // Menggunakan .Background() untuk kontainer sel, bukan .BackgroundColor()
+            table.Cell().Border(1).Background(Colors.Grey.Lighten3).Padding(5).Text(header).Bold();
         }
+
+        if (teks.Contains("Jenis PIC"))
+        {
+            if (_model.LampiranPic != null && _model.LampiranPic.Any())
+            {
+                foreach (var pic in _model.LampiranPic)
+                {
+                    table.Cell().Border(1).Padding(5).Text(pic.JenisPIC);
+                    table.Cell().Border(1).Padding(5).Text(pic.NamaPIC);
+                    table.Cell().Border(1).Padding(5).Text(pic.NomorTelepon);
+                    table.Cell().Border(1).Padding(5).Text(pic.AlamatEmail);
+                }
+            }
+        }
+        else if (teks.Contains("Jenis Tindakan Medis"))
+        {
+            if (_model.LampiranTindakanMedis != null && _model.LampiranTindakanMedis.Any())
+            {
+                int nomor = 1;
+                foreach (var tindakan in _model.LampiranTindakanMedis)
+                {
+                    table.Cell().Border(1).Padding(5).AlignCenter().Text((nomor++).ToString());
+                    table.Cell().Border(1).Padding(5).Text(tindakan.JenisTindakanMedis);
+                    table.Cell().Border(1).Padding(5).AlignRight().Text($"Rp. {tindakan.Tarif?.ToString("N0", new System.Globalization.CultureInfo("id-ID")) ?? "0"}");
+                    table.Cell().Border(1).Padding(5).Text(tindakan.Keterangan);
+                }
+            }
+        }
+    });
+}
 
         void RenderTabelKhususMenyatu(ColumnDescriptor column, List<string> tabelRows)
         {

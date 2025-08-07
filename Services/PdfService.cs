@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using pdfquestAPI.Data; // Pastikan namespace DbContext Anda sudah benar
 using pdfquestAPI.Documents;
 using pdfquestAPI.Documents.Models;
 using pdfquestAPI.Interfaces;
-using pdfquestAPI.Models; // Pastikan namespace untuk model DB Anda sudah benar
+using pdfquestAPI.Models;
 using QuestPDF.Fluent;
 using System;
 using System.Collections.Generic;
@@ -15,50 +16,79 @@ namespace pdfquestAPI.Services
     public class PdfService : IPdfService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly Data.ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public PdfService(IUnitOfWork unitOfWork, Data.ApplicationDbContext context)
+        public PdfService(IUnitOfWork unitOfWork, ApplicationDbContext context)
         {
             _unitOfWork = unitOfWork;
             _context = context;
         }
 
-        public async Task<byte[]> GeneratePerjanjianPdfAsync(int perjanjianId)
+        public async Task<byte[]> GeneratePerjanjianPdfAsync(int id_penyedia)
         {
-            var model = await BuildPerjanjianModelAsync(perjanjianId);
+            // Menggunakan id_penyedia untuk membangun model
+            var model = await BuildPerjanjianModelAsync(id_penyedia);
             var document = new PerjanjianDocument(model);
             byte[] pdfBytes = document.GeneratePdf();
             return pdfBytes;
         }
 
-        private async Task<PerjanjianDocumentModel> BuildPerjanjianModelAsync(int perjanjianId)
+        private async Task<PerjanjianDocumentModel> BuildPerjanjianModelAsync(int id_penyedia)
+{
+    // Mengambil data spesifik berdasarkan id_penyedia
+    var pihakKedua = await _unitOfWork.PenyediaLayanan.GetByIdAsync(id_penyedia)
+        ?? throw new KeyNotFoundException($"Penyedia Layanan dengan ID {id_penyedia} tidak ditemukan.");
+
+    var perjanjian = await _context.Perjanjian.FirstOrDefaultAsync(p => p.IdPenyedia == id_penyedia)
+        ?? throw new KeyNotFoundException($"Perjanjian untuk Penyedia Layanan ID {id_penyedia} tidak ditemukan.");
+
+    var pihakPertama = (await _unitOfWork.PihakPertama.GetAllAsync()).FirstOrDefault()
+        ?? throw new KeyNotFoundException("Data Pihak Pertama tidak ditemukan.");
+
+    // --- PERUBAHAN LOGIKA PENGAMBILAN DATA ---
+
+    // 1. Mengambil data Ketentuan Khusus dari MASTER TEMPLATE (id_penyedia IS NULL)
+    var ketentuanKhusus = await GetHierarchicalDataAsync(p => p.IdPenyedia == null && !(p.JudulTeks.StartsWith("LAMPIRAN")));
+
+    // 2. Mengambil data struktur Lampiran dari MASTER TEMPLATE (id_penyedia IS NULL)
+    var lampiran = await GetHierarchicalDataAsync(p => p.IdPenyedia == null && p.JudulTeks.StartsWith("LAMPIRAN"));
+
+    // 3. Mengambil data ISI TABEL yang SPESIFIK untuk id_penyedia yang diminta
+    var lampiranPicData = await _context.Lampiran_PIC
+        .Where(p => p.IdPenyedia == id_penyedia) // Tetap menggunakan id_penyedia
+        .Select(p => new PicModel
         {
-            var perjanjian = await _unitOfWork.Perjanjian.GetByIdAsync(perjanjianId)
-                ?? throw new KeyNotFoundException("Perjanjian tidak ditemukan.");
+            JenisPIC = p.JenisPIC,
+            NamaPIC = p.NamaPIC,
+            NomorTelepon = p.NomorTelepon,
+            AlamatEmail = p.AlamatEmail
+        })
+        .ToListAsync();
 
-            var pihakKedua = await _unitOfWork.PenyediaLayanan.GetByIdAsync(perjanjian.IdPenyedia)
-                ?? throw new KeyNotFoundException("Penyedia Layanan tidak ditemukan.");
+    var lampiranTindakanMedisData = await _context.Lampiran_TindakanMedis
+        .Where(t => t.IdPenyedia == id_penyedia) // Tetap menggunakan id_penyedia
+        .Select(t => new TindakanMedisModel
+        {
+            JenisTindakanMedis = t.JenisTindakanMedis,
+            Tarif = t.Tarif,
+            Keterangan = t.Keterangan
+        })
+        .ToListAsync();
 
-            var pihakPertama = (await _unitOfWork.PihakPertama.GetAllAsync()).FirstOrDefault()
-                ?? throw new KeyNotFoundException("Data Pihak Pertama tidak ditemukan.");
+    // --- AKHIR PERUBAHAN ---
 
-            // Mengambil data Ketentuan Khusus (yang BUKAN Lampiran)
-            var ketentuanKhusus = await GetHierarchicalDataAsync(p => !(p.JudulTeks != null && p.JudulTeks.StartsWith("LAMPIRAN")));
+    return new PerjanjianDocumentModel
+    {
+        Perjanjian = perjanjian,
+        PihakPertama = pihakPertama,
+        PihakKedua = pihakKedua,
+        KetentuanKhusus = ketentuanKhusus,
+        Lampiran = lampiran,
+        LampiranPic = lampiranPicData,
+        LampiranTindakanMedis = lampiranTindakanMedisData
+    };
+}
 
-            // Mengambil data Lampiran
-            var lampiran = await GetHierarchicalDataAsync(p => p.JudulTeks != null && p.JudulTeks.StartsWith("LAMPIRAN"));
-
-            return new PerjanjianDocumentModel
-            {
-                Perjanjian = perjanjian,
-                PihakPertama = pihakPertama,
-                PihakKedua = pihakKedua,
-                KetentuanKhusus = ketentuanKhusus,
-                Lampiran = lampiran
-            };
-        }
-
-        // PERBAIKAN: Metode ini disesuaikan untuk menghindari error kompilasi.
         private async Task<List<BabModel>> GetHierarchicalDataAsync(Expression<Func<JudulIsi, bool>> filter)
         {
             var allBab = await _context.JudulIsi.Where(filter).OrderBy(j => j.UrutanTampil).ToListAsync();
@@ -72,10 +102,8 @@ namespace pdfquestAPI.Services
             
             var allSubBabIds = allSubBab.Select(s => s.Id).ToList();
 
-            // PERBAIKAN: Query ini diubah untuk menghindari penggunaan .HasValue pada tipe 'int'.
-            // Cara ini lebih aman dan tetap efisien.
             var allPoin = await _context.PoinKetentuanKhusus
-                .Where(p => allSubBabIds.Contains(p.IdSubBab)) // Langsung cek containment.
+                .Where(p => allSubBabIds.Contains(p.IdSubBab))
                 .OrderBy(p => p.UrutanTampil).ToListAsync();
 
             var babList = allBab.Select(bab => new BabModel
@@ -88,7 +116,6 @@ namespace pdfquestAPI.Services
                     {
                         Konten = sb.Konten ?? string.Empty,
                         UrutanTampil = sb.UrutanTampil,
-                        // Menggunakan daftar 'allPoin' yang sudah diambil sebelumnya untuk efisiensi.
                         Poin = BuildPoinTree(allPoin.Where(p => p.IdSubBab == sb.Id).ToList(), null)
                     }).ToList()
             }).ToList();
