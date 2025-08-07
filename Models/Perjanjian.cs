@@ -12,6 +12,15 @@ namespace pdfquestAPI.Models
         [Column("id_perjanjian")]
         public int IdPerjanjian { get; set; }
 
+        // ======================================================
+        // KODE YANG DITAMBAHKAN
+        // Properti ini diperlukan untuk menghubungkan Perjanjian
+        // dengan data Pihak Pertama di database.
+        // ======================================================
+        [Column("id_pihak_pertama")]
+        public int IdPihakPertama { get; set; }
+        // ======================================================
+
         [Column("id_penyedia")]
         public int IdPenyedia { get; set; }
 
