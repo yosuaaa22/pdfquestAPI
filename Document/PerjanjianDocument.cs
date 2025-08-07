@@ -19,6 +19,7 @@ namespace pdfquestAPI.Documents
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
 
+    
         public void Compose(IDocumentContainer container)
         {
             container
@@ -44,6 +45,7 @@ namespace pdfquestAPI.Documents
                 });
         }
 
+        
         void ComposeHeader(IContainer container)
         {
             var titleStyle = TextStyle.Default.FontSize(12).Bold();
@@ -78,17 +80,18 @@ namespace pdfquestAPI.Documents
                 {
                     row.ConstantItem(220).Text("No. PT Asuransi Jiwa Inhealth Indonesia").Style(boldNumberStyle);
                     row.ConstantItem(10).Text(":").Style(numberLabelStyle);
-                    row.RelativeColumn().Text($"{_model.Perjanjian.NoPtInhealth}").Style(boldNumberStyle);
+                    row.RelativeItem().Text($"{_model.Perjanjian.NoPtInhealth}").Style(boldNumberStyle);
                 });
 
                 column.Item().PaddingTop(2).Row(row =>
                 {
                     row.ConstantItem(220).Text($"No. PT {_model.PihakKedua.NamaEntitasCalonProvider.ToUpper()}").Style(boldNumberStyle);
                     row.ConstantItem(10).Text(":").Style(numberLabelStyle);
-                    row.RelativeColumn().Text($"{_model.Perjanjian.NoPtPihakKedua}").Style(boldNumberStyle);
+                    row.RelativeItem().Text($"{_model.Perjanjian.NoPtPihakKedua}").Style(boldNumberStyle);
                 });
             });
         }
+
 
         void ComposeOpeningPageContent(ColumnDescriptor column)
         {
@@ -110,7 +113,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(35).AlignTop().Text("1.").Style(textStyle);
-                row.RelativeColumn().Text(text =>
+                row.RelativeItem().Text(text =>
                 {
                     text.Justify();
                     text.Span("PT ASURANSI JIWA INHEALTH INDONESIA").Style(boldTextStyle);
@@ -129,7 +132,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(35).AlignTop().Text("2.").Style(textStyle);
-                row.RelativeColumn().Text(text =>
+                row.RelativeItem().Text(text =>
                 {
                     text.Justify();
                     text.Span($"{_model.PihakKedua.NamaEntitasCalonProvider}").Style(boldTextStyle);
@@ -167,7 +170,7 @@ namespace pdfquestAPI.Documents
                 list.Item().Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("1.").Style(textStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Bahwa Pihak Pertama merupakan perseroan terbatas yang bergerak di bidang asuransi jiwa yang telah memperoleh izin dan persetujuan yang dibutuhkan untuk menjalankan kegiatan usahanya dan dalam menjalankan kegiatan usaha diawasi oleh Otoritas Jasa Keuangan Republik Indonesia.").Style(textStyle);
@@ -177,7 +180,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingTop(3).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("2.").Style(textStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Bahwa Pihak Kedua adalah sarana/fasilitas layanan kesehatan yang telah memperoleh izin untuk menjalankan kegiatan usaha sebagai fasilitas layanan kesehatan ").Style(textStyle);
@@ -196,7 +199,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingTop(3).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("3.").Style(textStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Bahwa Pihak Pertama bermaksud mengadakan kerja sama dengan Pihak Kedua sehubungan dengan penyediaan Pelayanan Kesehatan, Obat, dan Alat Kesehatan bagi Peserta (sebagaimana didefinisikan di bawah) dan Pihak Kedua bersedia untuk menyediakan Pelayanan Kesehatan, Obat, dan Alat Kesehatan bagi Peserta (sebagaimana didefinisikan di bawah) Pihak pertama.").Style(textStyle);
@@ -216,7 +219,7 @@ namespace pdfquestAPI.Documents
                 list.Item().Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("4.").Style(textStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Bahwa Para Pihak telah menandatangani Berita Acara Kesepakatan Penyediaan Layanan Kesehatan No. ").Style(textStyle);
@@ -230,7 +233,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingTop(3).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("5.").Style(textStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Bahwa Para Pihak sepakat untuk menandatangani Perjanjian ini untuk mengatur syarat dan ketentuan kerja sama antara Para Pihak dan penyediaan Pelayanan Kesehatan, Obat, dan Alat Kesehatan bagi Peserta (sebagaimana didefinisikan di bawah).").Style(textStyle);
@@ -249,7 +252,7 @@ namespace pdfquestAPI.Documents
 
             ComposeGeneralProvisions(column);
         }
-
+        
         void ComposeGeneralProvisions(ColumnDescriptor column)
         {
             var titleStyle = TextStyle.Default.FontSize(12).Bold();
@@ -280,7 +283,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(5).PaddingLeft(25).Row(row =>
             {
                 row.ConstantItem(35).AlignTop().Text("2.5").Style(bodyStyle);
-                row.RelativeColumn().Text(text =>
+                row.RelativeItem().Text(text =>
                 {
                     text.Justify();
                     text.Span("Hasil Peninjauan dapat dilampirkan pada ").Style(bodyStyle);
@@ -318,13 +321,14 @@ namespace pdfquestAPI.Documents
             ComposeMiscellaneous(column);
         }
 
+        
         void ComposeProvisionSection(
                 ColumnDescriptor column,
                 string sectionNumber,
                 string sectionTitle,
                 IEnumerable<string> items,
                 bool isBulletedList = true,
-                IEnumerable<string> subListContent = null,
+                IEnumerable<string>? subListContent = null,
                 string subListPrefix = "",
                 string subListType = "")
         {
@@ -335,7 +339,7 @@ namespace pdfquestAPI.Documents
             column.Item().ShowOnce().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text(sectionNumber).Style(bodyStyle);
-                row.RelativeColumn().Text(sectionTitle).Style(boldBodyStyle);
+                row.RelativeItem().Text(sectionTitle).Style(boldBodyStyle);
             });
 
             // Isi section
@@ -356,7 +360,7 @@ namespace pdfquestAPI.Documents
                             row.ConstantItem(35).AlignTop().ShowOnce().Text(itemLabel).Style(bodyStyle);
 
 
-                            row.RelativeColumn().Text(text =>
+                            row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
                                 text.Span(item).Style(bodyStyle);
@@ -399,7 +403,7 @@ namespace pdfquestAPI.Documents
                                 }
 
 
-                                row.RelativeColumn().Text(text =>
+                                row.RelativeItem().Text(text =>
                                 {
                                     text.Justify();
                                     text.Span(subItem).Style(bodyStyle);
@@ -411,6 +415,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeExclusionsSection(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -420,7 +425,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("4.").Style(bodyStyle);
-                row.RelativeColumn().Text("PELAYANAN KESEHATAN YANG TIDAK DITANGGUNG PIHAK PERTAMA").Style(boldBodyStyle);
+                row.RelativeItem().Text("PELAYANAN KESEHATAN YANG TIDAK DITANGGUNG PIHAK PERTAMA").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).PaddingLeft(25).Column(list =>
@@ -440,7 +445,7 @@ namespace pdfquestAPI.Documents
                     { "b.", "Pelayanan/pengobatan terhadap gangguan mental dan perilaku yang termasuk kategori psikosa dengan acuan kode ICD-10 F-20 sampai dengan F-29 (sumber: https://icd.who.int/browse10/2019/en)." },
                     { "c.", "Konsultasi psikolog;" },
                     { "d.", "Penyakit dan/atau kecelakaan yang diakibatkan oleh perbuatan sendiri (tidak terbatas pada upaya bunuh diri, penyalahgunaan Narkoba/Zat adiktif lain, bermain petasan);" },
-                    { "e.", null }, // Penanda untuk sub-list khusus
+                    { "e.", "" },
                     { "f.", "Pelayanan bersifat kosmetik dan estetik;" },
                     { "g.", "Imunisasi selain imunisasi dasar kecuali disebutkan lain;" },
                     { "h.", "Khitanan tanpa indikasi medis;" },
@@ -486,7 +491,7 @@ namespace pdfquestAPI.Documents
                             subList.Item().Row(row =>
                             {
                                 row.ConstantItem(15).AlignTop().Text("e.").Style(bodyStyle);
-                                row.RelativeColumn().Column(subSubList =>
+                                row.RelativeItem().Column(subSubList =>
                                 {
                                     subSubList.Spacing(5);
 
@@ -529,7 +534,7 @@ namespace pdfquestAPI.Documents
                             subList.Item().Row(row =>
                             {
                                 row.ConstantItem(15).AlignTop().Text(exclusion.Key).Style(bodyStyle);
-                                row.RelativeColumn().Text(text =>
+                                row.RelativeItem().Text(text =>
                                 {
                                     text.Justify();
                                     text.Span(exclusion.Value).Style(bodyStyle);
@@ -541,6 +546,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+    
         void ComposeWanprestasiSection(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -550,7 +556,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("6.").Style(bodyStyle);
-                row.RelativeColumn().Text("WANPRESTASI").Style(boldBodyStyle);
+                row.RelativeItem().Text("WANPRESTASI").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).PaddingLeft(25).Column(list =>
@@ -559,7 +565,7 @@ namespace pdfquestAPI.Documents
                 list.Item().Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("6.1").Style(bodyStyle);
-                    row.RelativeColumn().Column(subList =>
+                    row.RelativeItem().Column(subList =>
                     {
                         subList.Spacing(5);
 
@@ -612,7 +618,7 @@ namespace pdfquestAPI.Documents
                 list.Item().Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("6.2").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Dalam hal Pihak Pertama tidak dapat melaksanakan kewajiban pembayaran atas tagihan/invoice Pihak Kedua yang telah disetujui oleh Pihak Pertama, maka Pihak Kedua berhak  sebanyak 3 (tiga) kali untuk segera menyelesaikan kewajiban pembayaran tersebut. Apabila surat teguran ketiga tidak mendapatkan tanggapan dari Pihak Pertama maka Pihak Kedua berhak memutuskan Perjanjian ini dan Pihak Pertama tetap berkewajiban untuk melakukan pembayaran tagihan/invoice dimaksud.").Style(bodyStyle);
@@ -621,6 +627,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeMisuseAndFraud(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -630,7 +637,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("7.").Style(bodyStyle);
-                row.RelativeColumn().Text("PENYALAHGUNAAN ATAU PENYIMPANGAN").Style(boldBodyStyle);
+                row.RelativeItem().Text("PENYALAHGUNAAN ATAU PENYIMPANGAN").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).PaddingLeft(25).Column(list =>
@@ -640,7 +647,7 @@ namespace pdfquestAPI.Documents
                 list.Item().Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("7.1").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Dalam hal terjadi indikasi penyalahgunaan atau penyimpangan (fraud) yang dilakukan oleh Pihak Kedua (hal mana tidak perlu dibuktikan oleh adanya putusan pengadilan atau pihak lainnya yang bersifat berwenang) atau diketahui melakukan hal-hal yang bersifat merugikan Pihak Pertama (moral hazard) pada masa kerja sama, maka:")
@@ -676,7 +683,7 @@ namespace pdfquestAPI.Documents
                 list.Item().Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("7.2").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Pihak Kedua bertanggung jawab untuk memulihkan kerugian yang diderita oleh Pihak Pertama, termasuk dalam proses pengembalian Manfaat/Klaim yang sudah dibayarkan Pihak Pertama kepada Pihak Kedua sesuai dengan prosedur dan tata cara yang ditetapkan oleh Pihak Pertama dalam jangka waktu 30 (tiga puluh) ").Style(bodyStyle);
@@ -688,7 +695,7 @@ namespace pdfquestAPI.Documents
                 list.Item().Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("7.3").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Apabila dalam jangka waktu tersebut Pihak Kedua belum juga mengembalikan Manfaat/Klaim tersebut, maka Pihak Kedua dianggap telah melanggar Pihak Pertama dan Pihak Pertama berhak untuk memutuskan kerjasama secara sepihak dan mengajukan tuntutan hukum sekaligus untuk melakukan penagihan.")
@@ -698,6 +705,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeIndemnity(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -707,7 +715,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("8.").Style(bodyStyle);
-                row.RelativeColumn().Text("GANTI RUGI").Style(boldBodyStyle);
+                row.RelativeItem().Text("GANTI RUGI").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -718,7 +726,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("8.1").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Dalam hal Pihak Kedua melakukan pelanggaran apa pun terhadap ketentuan Perjanjian ini, kelalaian, kesalahan, malapraktik, fraud (termasuk namun tidak terbatas pada tindakan upcoding, pemalsuan dokumen, atau tindakan sejenis) atau tindakan lainnya yang berakibat pada:")
@@ -753,6 +761,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeRepresentationsAndWarranties(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -762,7 +771,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("9.").Style(bodyStyle);
-                row.RelativeColumn().Text("PERNYATAAN DAN JAMINAN").Style(boldBodyStyle);
+                row.RelativeItem().Text("PERNYATAAN DAN JAMINAN").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -773,7 +782,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("9.1").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Masing-masing Pihak dengan ini menyatakan dan menjamin kepada Pihak lainnya, baik pada tanggal penandatanganan Perjanjian ini dan selama Jangka Waktu Perjanjian, bahwa:")
@@ -815,7 +824,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("9.2").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Pihak Kedua dengan ini menyatakan dan menjamin kepada Pihak Pertama, baik pada tanggal penandatanganan Perjanjian ini dan selama Jangka Waktu Perjanjian, bahwa :")
@@ -851,7 +860,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("9.3").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Masing-masing Pihak tidak akan memberikan dan/atau menerima uang dan/atau barang gratifikasi dan/atau bingkisan yang berhubungan dengan jabatan serta memastikan kepatuhan terhadap ketentuan Undang-Undang Pemberantasan Tindak Pidana Korupsi.").Style(bodyStyle);
@@ -862,7 +871,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("9.4").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Setiap Pihak wajib segera memberitahukan secara tertulis kepada Pihak lainnya setiap hal, peristiwa atau keadaan yang dapat timbul atau diketahui setelah tanggal Perjanjian ini yang merupakan suatu pelanggaran dari atau bertentangan dengan setiap pernyataan dan jaminan dari Pihak tersebut.").Style(bodyStyle);
@@ -871,6 +880,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeForceMajeure(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -880,7 +890,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("10.").Style(bodyStyle);
-                row.RelativeColumn().Text("KEADAAN KAHAR (FORCE MAJEURE)").Style(boldBodyStyle);
+                row.RelativeItem().Text("KEADAAN KAHAR (FORCE MAJEURE)").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -890,7 +900,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("10.1").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("keadaan yang termasuk dalam keadaan kahar (Force Majeure) adalah peristiwa-peristiwa sebagai berikut:").Style(bodyStyle);
@@ -924,7 +934,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("10.2").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Apabila terjadi Keadaan Kahar, Pihak yang mengalami Keadaan Kahar harus memberitahukan kepada Pihak Lainnya secara tertulis selambat-lambatnya dalam waktu 5 (lima) Hari Kerja sejak terjadinya atau diketahuinya Keadaan Kahar disertai bukti-bukti yang menunjukkan terjadinya Keadaan Kahar dan memberitahukan waktu terbaik bagi pihak yang mengalami keaadaan kabar untuk melanjutkan pelaksanaan kewajibannya berdasarkan perjanjian ini. Apabila pihak yang mengalami keadaan kahar gagal memberikan pemberitahuan terjadinya keadaan kahar dalam jangka waktu yang ditentukan tersebut, maka keadaan kahar dianggap tidak pernah terjadi dan pihak yang mengalami tetap harus melaksanakan kewajibannya berdasarkan perjanjian ini").Style(bodyStyle);
@@ -934,7 +944,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("10.3").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Pihak yang mengalami Keadaan Kahar akan dibebaskan, selama jangka waktu terjadinya Keadaan Kahar tersebut, dari pelaksanaan kewajiban-kewajibannya berdasarkan Perjanjian ini.").Style(bodyStyle);
@@ -944,7 +954,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text("10.4").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Apabila Keadaan Kahar tersebut berlangsung melebihi atau diduga akan melebihi jangka waktu 30 (tiga puluh) Hari Kalender, maka Para Pihak sepakat untuk meninjau kembali Jangka Waktu Perjanjian ini.").Style(bodyStyle);
@@ -953,6 +963,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeConfidentiality(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -966,7 +977,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text(sectionNumber).Style(bodyStyle);
-                row.RelativeColumn().Text("KERAHASIAAN").Style(boldBodyStyle);
+                row.RelativeItem().Text("KERAHASIAAN").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -977,7 +988,7 @@ namespace pdfquestAPI.Documents
                 {
                     row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.1").Style(bodyStyle);
 
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Untuk tujuan perjannjian ini:").Style(bodyStyle);
@@ -1050,7 +1061,7 @@ namespace pdfquestAPI.Documents
                 {
                     row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
 
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Pihak Penerima berjanji kepada Pihak Pengungkap bahwa, dengan tunduk pada ketentuan Pasal 10.4. Perjanjian ini, kecuali persetujuan tertulis dari Pihak Pengungkap telah diperoleh sebelumnya, Pihak Penerima wajib, dan wajib melakukan usaha terbaiknya untuk memastikan bahwa Perwakilannya, menjaga kerahasiaan dan tidak akan karena kegagalan menjalankan kehati-hatian atau karena tindakan atau kelalaian apa pun mengungkapkan kepada siapa pun, atau menggunakan atau mengeksploitasi secara komersial untuk kepentingannya sendiri, setiap Informasi Rahasia dari Pihak Pengungkap.").Style(bodyStyle);
@@ -1062,7 +1073,7 @@ namespace pdfquestAPI.Documents
                 {
                     row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
 
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Persetujuan yang dirujuk dalam Pasal 11.2 Perjanjian ini tidak akan disyaratkan untuk pengungkapan oleh Pihak Penerima atas setiap Informasi Rahasia:").Style(bodyStyle);
@@ -1100,7 +1111,7 @@ namespace pdfquestAPI.Documents
                 list.Item().PaddingLeft(25).Row(row =>
                 {
                     row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
-                    row.RelativeColumn().Text(text =>
+                    row.RelativeItem().Text(text =>
                     {
                         text.Justify();
                         text.Span("Jika Pihak Penerima diminta untuk melakukan pengungkapan berdasarkan Pasal 10.3 Perjanjian ini, Pihak Penerima harus:").Style(bodyStyle);
@@ -1169,7 +1180,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
-                        row.RelativeColumn().Text(text =>
+                        row.RelativeItem().Text(text =>
                         {
                             text.Justify();
                             text.Span(remainingClauses[i]).Style(bodyStyle);
@@ -1179,6 +1190,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposePersonalData(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1188,7 +1200,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("12").Style(bodyStyle);
-                row.RelativeColumn().Text("DATA PRIBADI").Style(boldBodyStyle);
+                row.RelativeItem().Text("DATA PRIBADI").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -1200,7 +1212,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).ShowOnce().AlignTop().Text(number).Style(bodyStyle);
-                        row.RelativeColumn().Text(contentBuilder);
+                        row.RelativeItem().Text(contentBuilder);
                     });
                 }
 
@@ -1321,7 +1333,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-
+        
         void ComposeAntiBribery(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1331,7 +1343,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("13").Style(bodyStyle);
-                row.RelativeColumn().Text("KETENTUAN SISTEM MANAJEMEN ANTI PENYUAPAN").Style(boldBodyStyle);
+                row.RelativeItem().Text("KETENTUAN SISTEM MANAJEMEN ANTI PENYUAPAN").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -1343,7 +1355,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).ShowOnce().AlignTop().Text(number).Style(bodyStyle);
-                        row.RelativeColumn().Text(contentBuilder);
+                        row.RelativeItem().Text(contentBuilder);
                     });
                 }
 
@@ -1447,7 +1459,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-
+        
         void ComposeAML(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1456,7 +1468,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("14").Style(bodyStyle);
-                row.RelativeColumn().Text("PRINSIP MENGENAL NASABAH DAN PENERAPAN PROGRAM ANTI PENCUCIAN UANG DAN PENCEGAHAN PENDANAAN TERORISME DAN PENCEGAHAN PENDANAAN PROLIFERASI SENJATA PEMUSNAH MASSAL").Style(boldBodyStyle);
+                row.RelativeItem().Text("PRINSIP MENGENAL NASABAH DAN PENERAPAN PROGRAM ANTI PENCUCIAN UANG DAN PENCEGAHAN PENDANAAN TERORISME DAN PENCEGAHAN PENDANAAN PROLIFERASI SENJATA PEMUSNAH MASSAL").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -1468,7 +1480,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).ShowOnce().AlignTop().Text(number).Style(bodyStyle);
-                        row.RelativeColumn().Text(contentBuilder);
+                        row.RelativeItem().Text(contentBuilder);
                     });
                 }
 
@@ -1489,6 +1501,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeTermination(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1498,7 +1511,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("15").Style(bodyStyle);
-                row.RelativeColumn().Text("PENGAKHIRAN PERJANJIAN").Style(boldBodyStyle);
+                row.RelativeItem().Text("PENGAKHIRAN PERJANJIAN").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -1510,7 +1523,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).ShowOnce().AlignTop().Text(number).Style(bodyStyle);
-                        row.RelativeColumn().Text(contentBuilder);
+                        row.RelativeItem().Text(contentBuilder);
                     });
                 }
 
@@ -1558,6 +1571,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeCorrespondence(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1567,7 +1581,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("16").Style(bodyStyle);
-                row.RelativeColumn().Text("KORESPONDENSI").Style(boldBodyStyle);
+                row.RelativeItem().Text("KORESPONDENSI").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -1579,7 +1593,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).ShowOnce().AlignTop().Text(number).Style(bodyStyle);
-                        row.RelativeColumn().Text(contentBuilder);
+                        row.RelativeItem().Text(contentBuilder);
                     });
                 }
 
@@ -1597,6 +1611,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+        
         void ComposeGoverningLaw(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1606,7 +1621,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("17").Style(bodyStyle);
-                row.RelativeColumn().Text("HUKUM YANG BERLAKU DAN PENYELESAIAN SENGKETA").Style(boldBodyStyle);
+                row.RelativeItem().Text("HUKUM YANG BERLAKU DAN PENYELESAIAN SENGKETA").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -1618,7 +1633,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).ShowOnce().AlignTop().Text(number).Style(bodyStyle);
-                        row.RelativeColumn().Text(contentBuilder);
+                        row.RelativeItem().Text(contentBuilder);
                     });
                 }
 
@@ -1650,6 +1665,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
+    
         void ComposeMiscellaneous(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1659,7 +1675,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("18").Style(bodyStyle);
-                row.RelativeColumn().Text("LAIN - LAIN").Style(boldBodyStyle);
+                row.RelativeItem().Text("LAIN - LAIN").Style(boldBodyStyle);
             });
 
             column.Item().PaddingTop(5).Column(list =>
@@ -1671,7 +1687,7 @@ namespace pdfquestAPI.Documents
                     list.Item().PaddingLeft(25).Row(row =>
                     {
                         row.ConstantItem(35).AlignTop().Text(number).Style(bodyStyle);
-                        row.RelativeColumn().Text(text =>
+                        row.RelativeItem().Text(text =>
                         {
                             text.Justify();
                             text.Span(content).Style(bodyStyle);
@@ -1696,7 +1712,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-
+    
         void ComposeAllDefinitions(ColumnDescriptor column)
         {
 
@@ -1714,14 +1730,14 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("I.").Style(boldBodyStyle);
-                row.RelativeColumn().Text("DEFINISI DAN INTERPRETASI").Style(titleStyle);
+                row.RelativeItem().Text("DEFINISI DAN INTERPRETASI").Style(titleStyle);
             });
 
             // Section 1. Definisi
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("1.").Style(bodyStyle);
-                row.RelativeColumn().Text(text =>
+                row.RelativeItem().Text(text =>
                 {
                     text.Justify();
                     text.Span("Dalam Perjanjian ini, kecuali dalam konteksnya memerlukan pengertian lain, ungkapan-ungkapan dan kata-kata sebagai berikut mempunyai arti sebagaimana disebutkan di bawah ini;").Style(bodyStyle);
@@ -1739,7 +1755,7 @@ namespace pdfquestAPI.Documents
                         defs.Item().Row(row =>
                         {
                             row.ConstantItem(35).AlignTop().ShowOnce().Text($"1.{itemNumber++}").Style(bodyStyle);
-                            row.RelativeColumn().Column(subColumn =>
+                            row.RelativeItem().Column(subColumn =>
                             {
                                 subColumn.Item().Text(text =>
                                 {
@@ -1750,7 +1766,7 @@ namespace pdfquestAPI.Documents
                                 subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).AlignTop().ShowOnce().Text("1)").Style(bodyStyle);
-                                    subRow.RelativeColumn().Text(text =>
+                                    subRow.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
                                         text.Span("Provider Tingkat Pertama").Style(boldBodyStyle);
@@ -1760,7 +1776,7 @@ namespace pdfquestAPI.Documents
                                 subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).AlignTop().Text("2)").Style(bodyStyle);
-                                    subRow.RelativeColumn().Text(text =>
+                                    subRow.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
                                         text.Span("Provider Tingkat Lanjutan").Style(boldBodyStyle);
@@ -1775,7 +1791,7 @@ namespace pdfquestAPI.Documents
                         defs.Item().Row(row =>
                         {
                             row.ConstantItem(35).AlignTop().ShowOnce().Text($"1.{itemNumber++}").Style(bodyStyle);
-                            row.RelativeColumn().Text(text =>
+                            row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
                                 text.Span($"{definition.Term1}").Style(boldBodyStyle);
@@ -1792,7 +1808,7 @@ namespace pdfquestAPI.Documents
                         defs.Item().Row(row =>
                         {
                             row.ConstantItem(35).AlignTop().ShowOnce().Text($"1.{itemNumber++}").Style(bodyStyle);
-                            row.RelativeColumn().Column(subColumn =>
+                            row.RelativeItem().Column(subColumn =>
                             {
                                 subColumn.Item().Text(text =>
                                 {
@@ -1803,7 +1819,7 @@ namespace pdfquestAPI.Documents
                                 subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).ShowOnce().AlignTop().Text("1)").Style(bodyStyle);
-                                    subRow.RelativeColumn().Text(text =>
+                                    subRow.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
                                         text.Span("Letter of Acceptance").Style(boldBodyStyle);
@@ -1815,7 +1831,7 @@ namespace pdfquestAPI.Documents
                                 subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).AlignTop().Text("2)").Style(bodyStyle);
-                                    subRow.RelativeColumn().Text(text =>
+                                    subRow.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
                                         text.Span("Letter of Confirmation").Style(boldBodyStyle);
@@ -1828,7 +1844,7 @@ namespace pdfquestAPI.Documents
                                 subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).AlignTop().Text("3)").Style(bodyStyle);
-                                    subRow.RelativeColumn().Text(text =>
+                                    subRow.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
                                         text.Span("Surat Eligibilitas Peserta").Style(boldBodyStyle);
@@ -1845,7 +1861,7 @@ namespace pdfquestAPI.Documents
                         defs.Item().Row(row =>
                         {
                             row.ConstantItem(35).AlignTop().Text($"1.{itemNumber++}").Style(bodyStyle);
-                            row.RelativeColumn().Text(text =>
+                            row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
                                 text.Span($"{definition.Term1}").Style(boldBodyStyle);
@@ -1860,7 +1876,7 @@ namespace pdfquestAPI.Documents
                         defs.Item().Row(row =>
                         {
                             row.ConstantItem(35).AlignTop().Text($"1.{itemNumber++}").Style(bodyStyle);
-                            row.RelativeColumn().Text(text =>
+                            row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
                                 text.Span($"{definition.Term1}").Style(boldBodyStyle);
@@ -1875,7 +1891,7 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("2.").Style(bodyStyle);
-                row.RelativeColumn().Text(text =>
+                row.RelativeItem().Text(text =>
                 {
                     text.Justify();
                     text.Span("Dalam Perjanjian ini, kecuali ditentukan lain, rujukan ke:").Style(bodyStyle);
@@ -1890,7 +1906,7 @@ namespace pdfquestAPI.Documents
                     defs.Item().Row(row =>
                     {
                         row.ConstantItem(35).AlignTop().Text($"{definition.Term1}").Style(bodyStyle);
-                        row.RelativeColumn().Text(text =>
+                        row.RelativeItem().Text(text =>
                         {
                             text.Justify();
                             text.Span($"{definition.Explanation1}").Style(bodyStyle);
@@ -1962,10 +1978,10 @@ namespace pdfquestAPI.Documents
 
         public class DefinitionItem
         {
-            public string Term1 { get; set; }
-            public string Explanation1 { get; set; }
-            public string Term2 { get; set; }
-            public string Explanation2 { get; set; }
+            public required string Term1 { get; set; }
+            public required string Explanation1 { get; set; }
+            public string? Term2 { get; set; }
+            public string? Explanation2 { get; set; }
         }
 
         #region Main Content Methods
@@ -2182,51 +2198,51 @@ namespace pdfquestAPI.Documents
         }
 
         void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
-{
-    var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
-    // Gunakan loop for agar kita bisa melompati item yang sudah diproses
-    for (int i = 0; i < orderedPoin.Count; i++)
-    {
-        var poin = orderedPoin[i];
-        var teks = poin.TeksPoin;
-
-        if (teks.StartsWith("[TABLE_SPECIAL]"))
         {
-            // Mulai blok tabel. Kumpulkan semua baris tabel spesial yang berurutan.
-            var specialTableRowsContent = new List<string>();
-            int j = i;
-
-            // Terus looping selama masih dalam list dan item berikutnya adalah tabel spesial
-            while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.StartsWith("[TABLE_SPECIAL]"))
+            var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
+            // Gunakan loop for agar kita bisa melompati item yang sudah diproses
+            for (int i = 0; i < orderedPoin.Count; i++)
             {
-                // Tambahkan konten baris (tanpa tag) ke dalam list
-                specialTableRowsContent.Add(orderedPoin[j].TeksPoin.Replace("[TABLE_SPECIAL]", "").Replace("[/TABLE_SPECIAL]", "").Trim());
-                j++;
+                var poin = orderedPoin[i];
+                var teks = poin.TeksPoin;
+
+                if (teks.StartsWith("[TABLE_SPECIAL]"))
+                {
+                    // Mulai blok tabel. Kumpulkan semua baris tabel spesial yang berurutan.
+                    var specialTableRowsContent = new List<string>();
+                    int j = i;
+
+                    // Terus looping selama masih dalam list dan item berikutnya adalah tabel spesial
+                    while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.StartsWith("[TABLE_SPECIAL]"))
+                    {
+                        // Tambahkan konten baris (tanpa tag) ke dalam list
+                        specialTableRowsContent.Add(orderedPoin[j].TeksPoin.Replace("[TABLE_SPECIAL]", "").Replace("[/TABLE_SPECIAL]", "").Trim());
+                        j++;
+                    }
+
+                    // Render seluruh baris yang terkumpul sebagai satu tabel tunggal
+                    RenderTabelKhususMenyatu(column, specialTableRowsContent);
+
+                    // Pindahkan indeks utama melewati baris-baris yang baru saja dirender
+                    i = j - 1;
+                }
+                else if (teks.StartsWith("[TABLE]"))
+                {
+                    RenderTabelBiasa(column, teks);
+                }
+                else
+                {
+                    // Render sebagai teks biasa
+                    float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
+                    column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
+                }
+
+                if (poin.SubPoin != null && poin.SubPoin.Any())
+                {
+                    RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
+                }
             }
-
-            // Render seluruh baris yang terkumpul sebagai satu tabel tunggal
-            RenderTabelKhususMenyatu(column, specialTableRowsContent);
-            
-            // Pindahkan indeks utama melewati baris-baris yang baru saja dirender
-            i = j - 1; 
         }
-        else if (teks.StartsWith("[TABLE]"))
-        {
-            RenderTabelBiasa(column, teks);
-        }
-        else
-        {
-            // Render sebagai teks biasa
-            float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
-            column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
-        }
-
-        if (poin.SubPoin != null && poin.SubPoin.Any())
-        {
-            RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
-        }
-    }
-}
 
         void RenderTabelBiasa(ColumnDescriptor column, string teks)
         {
@@ -2261,64 +2277,63 @@ namespace pdfquestAPI.Documents
         }
 
         void RenderTabelKhususMenyatu(ColumnDescriptor column, List<string> tabelRows)
-{
-    // Buat satu kontainer dengan border luar untuk seluruh tabel
-    column.Item().PaddingTop(10).Border(1).Column(tableColumn =>
-    {
-        // Iterasi melalui setiap baris data yang sudah dikumpulkan
-        foreach (var (tabelTeks, index) in tabelRows.Select((value, i) => (value, i)))
         {
-            var parts = tabelTeks.Split(new[] { '|' }, 2);
-
-            if (parts.Length == 2)
+            column.Item().PaddingTop(10).Border(1).Column(tableColumn =>
             {
-                // Setiap item di sini adalah sebuah baris visual di dalam tabel
-                tableColumn.Item().Row(row =>
+                foreach (var (tabelTeks, index) in tabelRows.Select((value, i) => (value, i)))
                 {
-                    // Kolom Kiri (Judul)
-                    row.ConstantItem(150)
-                        .BorderRight(1) // Garis vertikal pemisah
-                        // Garis bawah untuk semua baris KECUALI yang terakhir
-                        .BorderBottom(index < tabelRows.Count - 1 ? 1 : 0) 
-                        .Padding(5)
-                        .ShowOnce() 
-                        .Text(parts[0]).Bold();
+                    var parts = tabelTeks.Split(new[] { '|' }, 2);
 
-                    // Kolom Kanan (Konten)
-                    row.RelativeItem()
-                        // Garis bawah untuk semua baris KECUALI yang terakhir
-                        .BorderBottom(index < tabelRows.Count - 1 ? 1 : 0)
-                        .Padding(5)
-                        .Column(col => // Gunakan Column untuk menumpuk item ber-nomor
+                    if (parts.Length == 2)
+                    {
+                        tableColumn.Item().Row(row =>
                         {
-                            var lines = parts[1].Split('\n').Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
-                            foreach (var line in lines)
-                            {
-                                col.Item().Row(innerRow =>
+                            // Kolom Kiri (Judul)
+                            row.ConstantItem(150)
+                                .BorderRight(1)
+                                .BorderBottom(index < tabelRows.Count - 1 ? 1 : 0)
+                                .Padding(5)
+                                .ShowOnce()
+                                .Text(parts[0]).Bold();
+
+                            // Kolom Kanan (Konten)
+                            row.RelativeItem()
+                                .BorderBottom(index < tabelRows.Count - 1 ? 1 : 0)
+                                .Padding(5)
+                                .Column(col =>
                                 {
-                                    innerRow.Spacing(5);
-                                    var lineParts = line.Trim().Split(new[] { '.' }, 2);
-                                    
-                                    
-                                    if (lineParts.Length == 2 && int.TryParse(lineParts[0], out _))
+                                    var lines = parts[1].Split(new[] { "\\n" }, StringSplitOptions.RemoveEmptyEntries)
+                                                    .Where(l => !string.IsNullOrWhiteSpace(l))
+                                                    .ToList();
+
+                                    for (int i = 0; i < lines.Count; i++)
                                     {
-                                        innerRow.ConstantItem(20).Text($"{lineParts[0].Trim()}.");
-                                        innerRow.RelativeItem().Text(lineParts[1].Trim()).Justify();
-                                    }
-                                    else
-                                    {
-                                        innerRow.RelativeItem().Text(line.Trim()).Justify();
+                                        var line = lines[i];
+                                        
+                                        // Membersihkan nomor asli dari setiap baris (misal: "1.", "2.", dst.)
+                                        var lineParts = line.Trim().Split(new[] { '.' }, 2);
+                                        var textContent = (lineParts.Length > 1 && int.TryParse(lineParts[0].Trim(), out _))
+                                                            ? lineParts[1].Trim()
+                                                            : line.Trim();
+
+                                        col.Item().Row(innerRow =>
+                                        {
+                                            innerRow.Spacing(5);
+                                            
+                                            // Membuat nomor urut yang benar menggunakan indeks loop
+                                            innerRow.ConstantItem(20).AlignLeft().ShowOnce().Text($"{i + 1}.");
+
+                                            // Menampilkan konten teks
+                                            innerRow.RelativeItem().Text(textContent).Justify();
+                                        });
                                     }
                                 });
-                            }
                         });
-                });
-            }
+                    }
+                }
+            });
         }
-    });
-}
         #endregion
     }
     
-    }
-
+}

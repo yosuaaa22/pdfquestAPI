@@ -43,10 +43,10 @@ namespace pdfquestAPI.Services
                 ?? throw new KeyNotFoundException("Data Pihak Pertama tidak ditemukan.");
 
             // Mengambil data Ketentuan Khusus (yang BUKAN Lampiran)
-            var ketentuanKhusus = await GetHierarchicalDataAsync(p => !p.JudulTeks.StartsWith("LAMPIRAN"));
+            var ketentuanKhusus = await GetHierarchicalDataAsync(p => !(p.JudulTeks != null && p.JudulTeks.StartsWith("LAMPIRAN")));
 
             // Mengambil data Lampiran
-            var lampiran = await GetHierarchicalDataAsync(p => p.JudulTeks.StartsWith("LAMPIRAN"));
+            var lampiran = await GetHierarchicalDataAsync(p => p.JudulTeks != null && p.JudulTeks.StartsWith("LAMPIRAN"));
 
             return new PerjanjianDocumentModel
             {
