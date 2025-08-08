@@ -1,63 +1,95 @@
+// Mengimpor namespace yang dibutuhkan dari .NET dan proyek Anda
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System;
+using System.Threading.Tasks;
 using pdfquestAPI.Documents;
 using pdfquestAPI.Documents.Models;
 using pdfquestAPI.Repositories;
-using QuestPDF.Fluent; // <-- PERBAIKAN: Menambahkan using statement yang hilang
+using QuestPDF.Fluent;
 
-// =================================================================
-// CONTROLLER UNTUK ENDPOINT PDF KUSTOM
-// =================================================================
-// Kelas ini mendefinisikan endpoint API baru untuk menghasilkan PDF
-// dari data yang sudah dikustomisasi di tabel Perjanjian_Konten.
 
-[ApiController]
-[Route("api")]
-public class PerjanjianKustomPdfController : ControllerBase
+namespace pdfquestAPI.Controllers
 {
-    private readonly PerjanjianKontenRepository _repository;
-
-    // Constructor ini akan menerima instance dari repository yang sudah
-    // didaftarkan di Program.cs (dependency injection).
-    public PerjanjianKustomPdfController(PerjanjianKontenRepository repository)
+    [ApiController]
+    [Route("api")]
+    public class PerjanjianKustomPdfController : ControllerBase
     {
-        _repository = repository;
-    }
+        private readonly PerjanjianKontenRepository _repository;
 
-    /// <summary>
-    /// Endpoint untuk menghasilkan PDF dari sebuah perjanjian yang kontennya sudah dikustomisasi.
-    /// </summary>
-    /// <param name="id">ID dari perjanjian yang akan dibuat PDF-nya.</param>
-    /// <returns>File PDF atau pesan error.</returns>
-    [HttpGet("perjanjian/{id}/pdf/kustom")]
-    public IActionResult GenerateKustomPdf(int id)
-    {
-        try
+        public PerjanjianKustomPdfController(PerjanjianKontenRepository repository)
         {
-            // 1. Panggil repository untuk mendapatkan model data yang sudah lengkap dan hierarkis
-            var perjanjianModel = _repository.GetPerjanjianModelKustom(id);
-
-            // Jika repository mengembalikan null, berarti data tidak ditemukan
-            if (perjanjianModel == null)
-            {
-                return NotFound($"Data perjanjian dengan ID {id} tidak ditemukan.");
-            }
-
-            // 2. Buat instance dari kelas dokumen QuestPDF Anda dengan model yang baru
-            var document = new PerjanjianDocument(perjanjianModel);
-
-            // 3. Hasilkan PDF dan kembalikan sebagai file untuk diunduh
-            byte[] pdfBytes = document.GeneratePdf();
-            string fileName = $"Perjanjian_Kustom_{id}.pdf";
-
-            return File(pdfBytes, "application/pdf", fileName);
+            _repository = repository;
         }
-        catch (Exception ex)
+
+        [HttpGet("perjanjian/{id}/pdf/kustom")]
+        public IActionResult GenerateKustomPdf(int id)
         {
-            // Jika terjadi error, catat error tersebut (opsional) dan kirim respons error ke client
-            // Console.WriteLine(ex.ToString()); // Untuk debugging
-            return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF: " + ex.Message);
+            try
+            {
+                var perjanjianModel = _repository.GetPerjanjianModelKustom(id);
+                if (perjanjianModel == null)
+                {
+                    return NotFound($"Data perjanjian dengan ID {id} tidak ditemukan.");
+                }
+                var document = new PerjanjianDocument(perjanjianModel);
+                byte[] pdfBytes = document.GeneratePdf();
+                string fileName = $"Perjanjian_Kustom_{id}.pdf";
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF: " + ex.Message);
+            }
+        }
+
+        [HttpPost("perjanjian/konten")]
+        public async Task<IActionResult> TambahKonten([FromBody] CreateKontenDto createDto)
+        {
+            if (createDto == null || string.IsNullOrEmpty(createDto.Konten))
+            {
+                return BadRequest("Data konten tidak boleh kosong.");
+            }
+            try
+            {
+                await _repository.TambahDanUrutkanUlangKontenAsync(createDto);
+                return Ok(new { message = "Konten berhasil ditambahkan dan diurutkan ulang." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Gagal menambah konten: {ex.Message}");
+            }
+        }
+
+        [HttpPut("perjanjian/konten/{kontenId}")]
+        public async Task<IActionResult> UpdateKonten(int kontenId, [FromBody] UpdateKontenDto updateDto)
+        {
+            if (updateDto == null || string.IsNullOrEmpty(updateDto.Konten))
+            {
+                return BadRequest("Konten tidak boleh kosong.");
+            }
+            try
+            {
+                await _repository.UpdateKontenAsync(kontenId, updateDto.Konten);
+                return Ok(new { message = "Konten berhasil diperbarui." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Gagal memperbarui konten: {ex.Message}");
+            }
+        }
+
+        [HttpDelete("perjanjian/{perjanjianId}/konten/{kontenId}")]
+        public async Task<IActionResult> HapusKonten(int perjanjianId, int kontenId)
+        {
+            try
+            {
+                await _repository.HapusDanUrutkanUlangKontenAsync(kontenId, perjanjianId);
+                return Ok(new { message = "Konten berhasil dihapus dan diurutkan ulang." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Gagal menghapus konten: {ex.Message}");
+            }
         }
     }
 }
