@@ -13,21 +13,21 @@ namespace pdfquestAPI.Models
 
         [Required]
         [Column("nama_Entitas_calon_provider")]
-        public required  string NamaEntitasCalonProvider { get; set; }
+        public required string NamaEntitasCalonProvider { get; set; }
 
         [Column("jenis_perusahaan")]
         public string? JenisPerusahaan { get; set; }
 
         [Required]
         [Column("no_nib_pihak_kedua")]
-        public required  string NoNibPihakKedua { get; set; }
+        public required string NoNibPihakKedua { get; set; }
 
         [Column("alamat_pemegang_polis")]
         public string? AlamatPemegangPolis { get; set; }
 
         [Required]
         [Column("nama_perwakilan")]
-        public required  string NamaPerwakilan { get; set; }
+        public required string NamaPerwakilan { get; set; }
 
         [Column("jabatan_perwakilan")]
         public string? JabatanPerwakilan { get; set; }
@@ -54,7 +54,7 @@ namespace pdfquestAPI.Models
 
         [Required]
         [Column("Nama_Bank")]
-        public required  string NamaBank { get; set; }
+        public required string NamaBank { get; set; }
 
         [Column("nama_cabang_bank")]
         public string? NamaCabangBank { get; set; }
@@ -65,7 +65,7 @@ namespace pdfquestAPI.Models
 
         [Required]
         [Column("pemilik_rekening")]
-        public required  string PemilikRekening { get; set; }
+        public required string PemilikRekening { get; set; }
 
         [Required]
         [Column("NAMA_PEMILIK_NPWP")]
@@ -73,10 +73,16 @@ namespace pdfquestAPI.Models
 
         [Required]
         [Column("NO_NPWP")]
-        public required  string NoNpwp { get; set; }
+        public required string NoNpwp { get; set; }
 
         [Required]
         [Column("jenis_npwp")]
-        public required  string JenisNpwp { get; set; }
+        public required string JenisNpwp { get; set; }
+
+        [Column("Telepon")]
+        public  string? Telepon { get; set; }
+        
+        [Column("Email")]
+        public  string? Email { get; set; }
     }
 }
