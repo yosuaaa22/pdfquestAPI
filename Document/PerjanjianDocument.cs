@@ -2161,13 +2161,13 @@ namespace pdfquestAPI.Documents
             column.Item().PaddingLeft(15).Text("Jakarta Selatan 12940, Lt.8,9,10.");
             column.Item().PaddingLeft(15).Text("Divisi Pelayanan Kesehatan");
             column.Item().PaddingLeft(15).Text($"U.p. : {_model.PihakPertama?.NamaPerwakilanPihakPertama ?? "[•]"}");
-            column.Item().PaddingLeft(15).Text("Email: ari.hikmawati@inhealth.co.id; dan providermc@inhealth.co.id");
+            column.Item().PaddingLeft(15).Text("Email: " + (_model.PihakPertama?.Email ?? "[•]"));
             column.Item().PaddingTop(10).PaddingBottom(2).Text("Pihak Kedua:");
             column.Item().PaddingLeft(15).Text(_model.PihakKedua.NamaEntitasCalonProvider ?? "PT [•]");
             column.Item().PaddingLeft(15).Text(_model.PihakKedua.AlamatPemegangPolis ?? "[Alamat]");
-            column.Item().PaddingLeft(15).Text("Telp: []");
+            column.Item().PaddingLeft(15).Text($"Telp: {_model.PihakKedua.Telepon ?? "[ ]"}");
             column.Item().PaddingLeft(15).Text($"U.p.: {_model.PihakKedua.NamaPerwakilan ?? "[]"}");
-            column.Item().PaddingLeft(15).Text("Email: []");
+            column.Item().PaddingLeft(15).Text("Email: " + (_model.PihakKedua?.Email ?? "[•]"));
         }
         #endregion
 
