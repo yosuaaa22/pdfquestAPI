@@ -2197,52 +2197,69 @@ namespace pdfquestAPI.Documents
             }
         }
 
-        void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
+        // File: pdfquestAPI/Documents/PerjanjianDocument.cs
+
+void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
+{
+    var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
+    
+    for (int i = 0; i < orderedPoin.Count; i++)
+    {
+        var poin = orderedPoin[i];
+        var teks = poin.TeksPoin;
+
+        // --- AWAL PERUBAHAN ---
+        // 1. Ubah pemeriksaan dari StartsWith menjadi Contains
+        if (teks.Contains("[TABLE_SPECIAL]"))
         {
-            var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
-            // Gunakan loop for agar kita bisa melompati item yang sudah diproses
-            for (int i = 0; i < orderedPoin.Count; i++)
+            // 2. Pisahkan awalan (misal: "q.") dari konten tabel
+            int tableTagIndex = teks.IndexOf("[TABLE_SPECIAL]");
+            string prefix = teks.Substring(0, tableTagIndex).Trim();
+            
+            // Render awalan sebagai teks biasa jika ada
+            if (!string.IsNullOrEmpty(prefix))
             {
-                var poin = orderedPoin[i];
-                var teks = poin.TeksPoin;
-
-                if (teks.StartsWith("[TABLE_SPECIAL]"))
-                {
-                    // Mulai blok tabel. Kumpulkan semua baris tabel spesial yang berurutan.
-                    var specialTableRowsContent = new List<string>();
-                    int j = i;
-
-                    // Terus looping selama masih dalam list dan item berikutnya adalah tabel spesial
-                    while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.StartsWith("[TABLE_SPECIAL]"))
-                    {
-                        // Tambahkan konten baris (tanpa tag) ke dalam list
-                        specialTableRowsContent.Add(orderedPoin[j].TeksPoin.Replace("[TABLE_SPECIAL]", "").Replace("[/TABLE_SPECIAL]", "").Trim());
-                        j++;
-                    }
-
-                    // Render seluruh baris yang terkumpul sebagai satu tabel tunggal
-                    RenderTabelKhususMenyatu(column, specialTableRowsContent);
-
-                    // Pindahkan indeks utama melewati baris-baris yang baru saja dirender
-                    i = j - 1;
-                }
-                else if (teks.StartsWith("[TABLE]"))
-                {
-                    RenderTabelBiasa(column, teks);
-                }
-                else
-                {
-                    // Render sebagai teks biasa
-                    float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
-                    column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
-                }
-
-                if (poin.SubPoin != null && poin.SubPoin.Any())
-                {
-                    RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
-                }
+                column.Item().PaddingLeft(initialIndent).PaddingBottom(5).Text(prefix);
             }
+
+            // 3. Kumpulkan semua baris tabel yang berurutan
+            var specialTableRowsContent = new List<string>();
+            int j = i;
+            while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.Contains("[TABLE_SPECIAL]"))
+            {
+                var currentTeks = orderedPoin[j].TeksPoin;
+                var currentContentMatch = Regex.Match(currentTeks, @"\[TABLE_SPECIAL\](.*?)\[/TABLE_SPECIAL\]", RegexOptions.Singleline);
+                if (currentContentMatch.Success)
+                {
+                    specialTableRowsContent.Add(currentContentMatch.Groups[1].Value.Trim());
+                }
+                j++;
+            }
+
+            // Render seluruh baris yang terkumpul sebagai satu tabel tunggal
+            RenderTabelKhususMenyatu(column, specialTableRowsContent);
+
+            // Pindahkan indeks utama melewati baris-baris yang baru saja dirender
+            i = j - 1;
         }
+        // --- AKHIR PERUBAHAN --- (Logika untuk [TABLE] dan teks biasa tetap sama)
+        else if (teks.StartsWith("[TABLE]"))
+        {
+            RenderTabelBiasa(column, teks);
+        }
+        else
+        {
+            // Render sebagai teks biasa
+            float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
+            column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
+        }
+
+        if (poin.SubPoin != null && poin.SubPoin.Any())
+        {
+            RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
+        }
+    }
+}
 
         void RenderTabelBiasa(ColumnDescriptor column, string teks)
 {
