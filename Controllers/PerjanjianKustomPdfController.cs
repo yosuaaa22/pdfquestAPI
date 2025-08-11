@@ -21,6 +21,11 @@ namespace pdfquestAPI.Controllers
             _repository = repository;
         }
 
+        // Di dalam kelas PerjanjianKustomPdfController
+
+
+
+
         [HttpGet("perjanjian/{id}/pdf/kustom")]
         public IActionResult GenerateKustomPdf(int id)
         {
@@ -39,6 +44,31 @@ namespace pdfquestAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF: " + ex.Message);
+            }
+        }
+
+        [HttpGet("perjanjian/{id}/konten/struktur")]
+        public async Task<IActionResult> GetKontenByKeyword(int id, [FromQuery] string kataKunci)
+        {
+            if (string.IsNullOrWhiteSpace(kataKunci))
+            {
+                return BadRequest("Parameter 'kataKunci' tidak boleh kosong.");
+            }
+
+            try
+            {
+                var hasil = await _repository.CariKontenByKeywordAsync(id, kataKunci);
+
+                if (hasil == null)
+                {
+                    return NotFound(new { message = $"Konten dengan kata kunci '{kataKunci}' pada perjanjian ID {id} tidak ditemukan." });
+                }
+
+                return Ok(hasil);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Terjadi kesalahan internal: {ex.Message}");
             }
         }
 

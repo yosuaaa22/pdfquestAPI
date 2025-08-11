@@ -14,6 +14,15 @@ namespace pdfquestAPI.Repositories
     public class UpdateKontenDto { public string Konten { get; set; } }
     public class CreateKontenDto { public int IdPerjanjian { get; set; } public int? ParentId { get; set; } public string LevelType { get; set; } public string Konten { get; set; } }
 
+    public class UpdateKontenByPathDto
+    {
+        // Path berisi urutan konten dari Bab -> SubBab -> Poin
+        // Contoh: ["BAB I KETENTUAN UMUM", "1.1 Definisi", "a. Hari kerja..."]
+        public List<string> Path { get; set; }
+        
+        // Teks baru untuk menggantikan konten lama
+        public string NewKonten { get; set; }
+    }
     public class PerjanjianKontenRepository
     {
         private readonly string _connectionString;
@@ -108,13 +117,16 @@ namespace pdfquestAPI.Repositories
                 }
 
                 string numberingStyle = "numeric";
-                if (children.Any()) {
+                if (children.Any())
+                {
                     var firstChild = children.First();
                     if (firstChild.LevelType == "Judul") numberingStyle = "numeric_bab";
                     else if (firstChild.LevelType == "SubBab") numberingStyle = "numeric_subbab";
-                    else {
+                    else
+                    {
                         var firstChildParts = firstChild.Konten?.Trim().Split(new[] { ' ' }, 2);
-                        if (firstChildParts?.Length > 1) {
+                        if (firstChildParts?.Length > 1)
+                        {
                             var prefix = firstChildParts[0];
                             if (Regex.IsMatch(prefix, @"^[ivxlcdm]+\.$", RegexOptions.IgnoreCase)) numberingStyle = "roman";
                             else if (Regex.IsMatch(prefix, @"^[a-z]\.$", RegexOptions.IgnoreCase)) numberingStyle = "alphabetic";
@@ -127,7 +139,7 @@ namespace pdfquestAPI.Repositories
                     var item = children[i];
                     int newUrutan = i + 1;
                     string newPrefix;
-                    
+
                     switch (numberingStyle)
                     {
                         case "alphabetic": newPrefix = $"{ToAlphabetic(newUrutan)}."; break;
@@ -139,13 +151,13 @@ namespace pdfquestAPI.Repositories
 
                     var cleanText = GetCleanText(item.Konten);
                     var newKonten = $"{newPrefix} {cleanText}";
-                    
+
                     var updateCommand = new SqlCommand("UPDATE Perjanjian_Konten SET konten = @konten, urutan_tampil = @urutan WHERE id = @id");
                     updateCommand.Parameters.AddWithValue("@konten", newKonten);
                     updateCommand.Parameters.AddWithValue("@urutan", newUrutan);
                     updateCommand.Parameters.AddWithValue("@id", item.Id);
                     updateCommands.Add(updateCommand);
-                    
+
                     string nextPrefix = numberingStyle == "numeric_subbab" ? newPrefix + "." : newPrefix;
                     RecursiveRenumber(item.Id, nextPrefix, item.LevelType);
                 }
@@ -156,8 +168,10 @@ namespace pdfquestAPI.Repositories
                 using (var conn = new SqlConnection(_connectionString))
                 {
                     await conn.OpenAsync();
-                    using (var transaction = conn.BeginTransaction()) {
-                        foreach (var cmd in updateCommands) {
+                    using (var transaction = conn.BeginTransaction())
+                    {
+                        foreach (var cmd in updateCommands)
+                        {
                             cmd.Connection = conn;
                             cmd.Transaction = transaction;
                             await cmd.ExecuteNonQueryAsync();
@@ -167,7 +181,7 @@ namespace pdfquestAPI.Repositories
                 }
             }
         }
-        
+
         private string GetCleanText(string text)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;
@@ -194,6 +208,40 @@ namespace pdfquestAPI.Repositories
                 await connection.OpenAsync();
                 await command.ExecuteNonQueryAsync();
             }
+        }
+
+        public async Task<object> CariKontenByKeywordAsync(int perjanjianId, string kataKunci)
+        {
+            object result = null;
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                // Menggunakan TOP 1 untuk mengambil hasil pertama yang cocok, sesuai contoh di screenshot.
+                // Menggunakan LIKE untuk pencarian teks parsial.
+                var command = new SqlCommand(
+                    "SELECT TOP 1 id, parent_id, konten, urutan_tampil FROM Perjanjian_Konten " +
+                    "WHERE id_perjanjian = @idPerjanjian AND konten LIKE @kataKunci " +
+                    "ORDER BY urutan_tampil, id", // Urutkan untuk hasil yang konsisten
+                    connection);
+
+                command.Parameters.AddWithValue("@idPerjanjian", perjanjianId);
+                command.Parameters.AddWithValue("@kataKunci", $"%{kataKunci}%"); // Wildcard untuk pencarian substring
+
+                await connection.OpenAsync();
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        result = new
+                        {
+                            id = (int)reader["id"],
+                            parentId = reader.IsDBNull(reader.GetOrdinal("parent_id")) ? (int?)null : (int)reader["parent_id"],
+                            konten = reader["konten"] as string,
+                            urutanTampil = (int)reader["urutan_tampil"]
+                        };
+                    }
+                }
+            }
+            return result;
         }
 
         private string ToAlphabetic(int number)
@@ -367,43 +415,76 @@ namespace pdfquestAPI.Repositories
             return list;
         }
 
-        private (List<BabModel> KetentuanKhusus, List<BabModel> Lampiran) MapToDocumentModel(List<PerjanjianKontenData> flatList)
+        // pdfquestAPI/Repositories/PerjanjianKontenRepository.cs
+
+        // File: pdfquestAPI/Repositories/PerjanjianKontenRepository.cs
+
+private (List<BabModel> KetentuanKhusus, List<BabModel> Lampiran) MapToDocumentModel(List<PerjanjianKontenData> flatList)
+{
+    var babLookup = new Dictionary<int, BabModel>();
+    var subBabLookup = new Dictionary<int, SubBabModel>();
+    var poinLookup = new Dictionary<int, PoinModel>();
+    var ketentuanKhususList = new List<BabModel>();
+    var lampiranList = new List<BabModel>();
+
+    // Proses Judul (Bab)
+    foreach (var item in flatList.Where(x => x.LevelType == "Judul").OrderBy(x => x.UrutanTampil))
+    {
+        var bab = new BabModel { JudulTeks = item.Konten, UrutanTampil = item.UrutanTampil, SubBab = new List<SubBabModel>() };
+        babLookup[item.Id] = bab;
+        if (item.Konten != null && item.Konten.ToUpper().Contains("LAMPIRAN"))
         {
-            var babLookup = new Dictionary<int, BabModel>();
-            var subBabLookup = new Dictionary<int, SubBabModel>();
-            var poinLookup = new Dictionary<int, PoinModel>();
-            var ketentuanKhususList = new List<BabModel>();
-            var lampiranList = new List<BabModel>();
-
-            foreach (var item in flatList.Where(x => x.LevelType == "Judul").OrderBy(x => x.UrutanTampil))
-            {
-                var bab = new BabModel { JudulTeks = item.Konten, UrutanTampil = item.UrutanTampil, SubBab = new List<SubBabModel>() };
-                babLookup[item.Id] = bab;
-                if (item.Konten != null && item.Konten.ToUpper().Contains("LAMPIRAN")) lampiranList.Add(bab);
-                else ketentuanKhususList.Add(bab);
-            }
-
-            foreach (var item in flatList.Where(x => x.LevelType == "SubBab").OrderBy(x => x.UrutanTampil))
-            {
-                if (item.ParentId.HasValue && babLookup.TryGetValue(item.ParentId.Value, out var parentBab))
-                {
-                    var subBab = new SubBabModel { Konten = item.Konten, UrutanTampil = item.UrutanTampil, Poin = new List<PoinModel>() };
-                    subBabLookup[item.Id] = subBab;
-                    parentBab.SubBab.Add(subBab);
-                }
-            }
-
-            foreach (var item in flatList.Where(x => x.LevelType == "Poin").OrderBy(x => x.UrutanTampil))
-            {
-                var poin = new PoinModel { Id = item.Id, ParentId = item.ParentId, TeksPoin = item.Konten, UrutanTampil = item.UrutanTampil, SubPoin = new List<PoinModel>() };
-                poinLookup[item.Id] = poin;
-                if (item.ParentId.HasValue)
-                {
-                    if (subBabLookup.TryGetValue(item.ParentId.Value, out var parentSubBab)) parentSubBab.Poin.Add(poin);
-                    else if (poinLookup.TryGetValue(item.ParentId.Value, out var parentPoin)) parentPoin.SubPoin.Add(poin);
-                }
-            }
-            return (ketentuanKhususList, lampiranList);
+            lampiranList.Add(bab);
         }
+        else
+        {
+            ketentuanKhususList.Add(bab);
+        }
+    }
+
+    // Proses SubBab
+    foreach (var item in flatList.Where(x => x.LevelType == "SubBab").OrderBy(x => x.UrutanTampil))
+    {
+        if (item.ParentId.HasValue && babLookup.TryGetValue(item.ParentId.Value, out var parentBab))
+        {
+            var subBab = new SubBabModel { Konten = item.Konten, UrutanTampil = item.UrutanTampil, Poin = new List<PoinModel>() };
+            subBabLookup[item.Id] = subBab;
+            parentBab.SubBab.Add(subBab);
+        }
+    }
+
+    // Proses Poin (termasuk yang berisi tag tabel)
+    // Logika ini hanya memetakan data mentah tanpa parsing.
+    foreach (var item in flatList.Where(x => x.LevelType == "Poin" || x.LevelType == "Tabel").OrderBy(x => x.UrutanTampil))
+    {
+        var poin = new PoinModel 
+        { 
+            Id = item.Id, 
+            ParentId = item.ParentId, 
+            TeksPoin = item.Konten, // <-- PENTING: Ambil string mentah apa adanya
+            UrutanTampil = item.UrutanTampil, 
+            SubPoin = new List<PoinModel>() 
+        };
+        poinLookup[item.Id] = poin;
+
+        if (item.ParentId.HasValue)
+        {
+            if (subBabLookup.TryGetValue(item.ParentId.Value, out var parentSubBab))
+            {
+                parentSubBab.Poin.Add(poin);
+            }
+            else if (poinLookup.TryGetValue(item.ParentId.Value, out var parentPoin))
+            {
+                parentPoin.SubPoin.Add(poin);
+            }
+        }
+    }
+
+    return (ketentuanKhususList, lampiranList);
+}
+
+
+
+
     }
 }
