@@ -1,12 +1,9 @@
-// Mengimpor namespace yang dibutuhkan dari .NET dan proyek Anda
 using Microsoft.AspNetCore.Mvc;
+using pdfquestAPI.Repositories; // Pastikan namespace repository Anda sudah benar
 using System;
 using System.Threading.Tasks;
 using pdfquestAPI.Documents;
-using pdfquestAPI.Documents.Models;
-using pdfquestAPI.Repositories;
 using QuestPDF.Fluent;
-
 
 namespace pdfquestAPI.Controllers
 {
@@ -14,36 +11,41 @@ namespace pdfquestAPI.Controllers
     [Route("api")]
     public class PerjanjianKustomPdfController : ControllerBase
     {
+        // Kembalikan dependency ke PerjanjianKontenRepository
         private readonly PerjanjianKontenRepository _repository;
 
+        // Kembalikan constructor ke versi aslinya
         public PerjanjianKustomPdfController(PerjanjianKontenRepository repository)
         {
             _repository = repository;
         }
 
-        // Di dalam kelas PerjanjianKustomPdfController
+        // Endpoint untuk generate PDF kustom sudah DIHAPUS dari sini
 
-
-
-
+        // Endpoint-endpoint di bawah ini sekarang akan berfungsi kembali
+        // karena _repository sudah didefinisikan dengan benar.
+        
         [HttpGet("perjanjian/{id}/pdf/kustom")]
         public IActionResult GenerateKustomPdf(int id)
         {
             try
             {
+                // Panggil lagi metode dari repository
                 var perjanjianModel = _repository.GetPerjanjianModelKustom(id);
                 if (perjanjianModel == null)
                 {
-                    return NotFound($"Data perjanjian dengan ID {id} tidak ditemukan.");
+                    return NotFound($"Data perjanjian kustom dengan ID {id} tidak ditemukan.");
                 }
+
                 var document = new PerjanjianDocument(perjanjianModel);
                 byte[] pdfBytes = document.GeneratePdf();
-                string fileName = $"Perjanjian_Kustom_{id}.pdf";
+                string fileName = $"Perjanjian_Kustom_{id}_{DateTime.Now:yyyyMMdd}.pdf";
                 return File(pdfBytes, "application/pdf", fileName);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF: " + ex.Message);
+                // Logger bisa ditambahkan di sini
+                return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF kustom: " + ex.Message);
             }
         }
 

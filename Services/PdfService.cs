@@ -90,38 +90,39 @@ namespace pdfquestAPI.Services
 }
 
         private async Task<List<BabModel>> GetHierarchicalDataAsync(Expression<Func<JudulIsi, bool>> filter)
+{
+    // Menggunakan Include dan ThenInclude adalah cara paling efisien dan direkomendasikan
+    var babDataFromDb = await _context.JudulIsi
+        .AsNoTracking() // Baik untuk performa karena data ini hanya untuk dibaca
+        .Where(filter)
+        .Include(j => j.SubBab)
+            .ThenInclude(sb => sb.Poin) // <-- EF akan mengambil semua data Poin yang terkait
+        .OrderBy(j => j.UrutanTampil)
+        .ToListAsync();
+
+    // Sekarang kita hanya perlu memetakan (mapping) dari model database ke model dokumen
+    var babList = babDataFromDb.Select(babDb => new BabModel
+    {
+        JudulTeks = babDb.JudulTeks ?? string.Empty,
+        UrutanTampil = babDb.UrutanTampil,
+        SubBab = babDb.SubBab.OrderBy(sb => sb.UrutanTampil).Select(sbDb => new SubBabModel
         {
-            var allBab = await _context.JudulIsi.Where(filter).OrderBy(j => j.UrutanTampil).ToListAsync();
-            if (!allBab.Any()) return new List<BabModel>();
-
-            var allBabIds = allBab.Select(b => b.Id).ToList();
-
-            var allSubBab = await _context.SubBabKetentuanKhusus
-                .Where(s => allBabIds.Contains(s.IdJudul))
-                .OrderBy(s => s.UrutanTampil).ToListAsync();
-            
-            var allSubBabIds = allSubBab.Select(s => s.Id).ToList();
-
-            var allPoin = await _context.PoinKetentuanKhusus
-                .Where(p => allSubBabIds.Contains(p.IdSubBab))
-                .OrderBy(p => p.UrutanTampil).ToListAsync();
-
-            var babList = allBab.Select(bab => new BabModel
+            Konten = sbDb.Konten ?? string.Empty,
+            UrutanTampil = sbDb.UrutanTampil,
+            // Cukup petakan list datar yang sudah diambil oleh ThenInclude
+            Poin = sbDb.Poin.OrderBy(p => p.UrutanTampil).Select(pDb => new PoinModel
             {
-                JudulTeks = bab.JudulTeks ?? string.Empty,
-                UrutanTampil = bab.UrutanTampil,
-                SubBab = allSubBab
-                    .Where(sb => sb.IdJudul == bab.Id)
-                    .Select(sb => new SubBabModel
-                    {
-                        Konten = sb.Konten ?? string.Empty,
-                        UrutanTampil = sb.UrutanTampil,
-                        Poin = BuildPoinTree(allPoin.Where(p => p.IdSubBab == sb.Id).ToList(), null)
-                    }).ToList()
-            }).ToList();
+                Id = pDb.Id,
+                ParentId = pDb.Parent, // Pastikan nama kolom 'Parent' sudah benar
+                TeksPoin = pDb.TeksPoin ?? string.Empty,
+                UrutanTampil = pDb.UrutanTampil
+                // Properti SubPoin tidak ada di sini, karena kita menggunakan list datar
+            }).ToList()
+        }).ToList()
+    }).ToList();
 
-            return babList;
-        }
+    return babList;
+}
 
         private List<PoinModel> BuildPoinTree(List<PoinKetentuanKhusus> allPoinForSubBab, int? parentId)
         {

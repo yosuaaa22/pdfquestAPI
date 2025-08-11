@@ -1989,59 +1989,64 @@ namespace pdfquestAPI.Documents
         {
 
             column.Item().PageBreak();
-            column.Item().AlignLeft().Text("III. KETENTUAN KHUSUS").Bold().FontSize(12);
+    column.Item().AlignLeft().Text("III. KETENTUAN KHUSUS").Bold().FontSize(12);
 
-            foreach (var bab in _model.KetentuanKhusus.OrderBy(b => b.UrutanTampil))
+    // Gunakan LINQ .Select() untuk mendapatkan indeks bab utama (untuk penomoran 1., 2., 3.)
+    foreach (var (bab, babIndex) in _model.KetentuanKhusus.OrderBy(b => b.UrutanTampil).Select((value, i) => (value, i)))
+    {
+        column.Item().PaddingTop(24).Table(table =>
+        {
+            table.ColumnsDefinition(columns =>
             {
-                column.Item().PaddingTop(24).Table(table =>
+                columns.ConstantColumn(120);
+                columns.ConstantColumn(10);
+                columns.RelativeColumn();
+            });
+
+            // Gunakan babIndex untuk penomoran otomatis
+            table.Cell().ShowOnce().AlignTop().Text($"{babIndex + 1}. {bab.JudulTeks}").Bold();
+            table.Cell().ShowOnce().AlignTop().AlignCenter().Text(":");
+
+            table.Cell().Column(contentColumn =>
+            {
+                if (bab.UrutanTampil == 7) RenderRekeningBankFromModel(contentColumn);
+                else if (bab.UrutanTampil == 8) RenderAlamatKorespondensiFromModel(contentColumn);
+                else
                 {
-                    table.ColumnsDefinition(columns =>
+                    // Loop untuk SubBab, gunakan .Select() untuk mendapatkan indeks sub-bab
+                    var orderedSubBabs = bab.SubBab.OrderBy(s => s.UrutanTampil).ToList();
+                    foreach (var (subBab, subBabIndex) in orderedSubBabs.Select((value, i) => (value, i)))
                     {
-                        columns.ConstantColumn(120);
-                        columns.ConstantColumn(10);
-                        columns.RelativeColumn();
-                    });
-
-                    table.Cell().ShowOnce().AlignTop().Text($"{bab.UrutanTampil}. {bab.JudulTeks}").Bold();
-                    table.Cell().ShowOnce().AlignTop().AlignCenter().Text(":");
-
-                    table.Cell().Column(contentColumn =>
-                    {
-                        if (bab.UrutanTampil == 7) RenderRekeningBankFromModel(contentColumn);
-                        else if (bab.UrutanTampil == 8) RenderAlamatKorespondensiFromModel(contentColumn);
-                        else
+                        if (!string.IsNullOrWhiteSpace(subBab.Konten))
                         {
-                            foreach (var subBab in bab.SubBab.OrderBy(s => s.UrutanTampil))
+                            // Buat label SubBab secara dinamis (contoh: 1.1, 1.2)
+                            // Hanya tampilkan nomor jika ada lebih dari satu sub-bab atau jika ada poin di dalamnya
+                            var subBabLabel = (orderedSubBabs.Count > 1 || (subBab.Poin != null && subBab.Poin.Any()))
+                                ? $"{babIndex + 1}.{subBabIndex + 1}."
+                                : "";
+
+                            contentColumn.Item().PaddingBottom(8).Row(row =>
                             {
-                                if (!string.IsNullOrWhiteSpace(subBab.Konten))
+                                row.Spacing(5);
+                                if (!string.IsNullOrEmpty(subBabLabel))
                                 {
-                                    var subBabContentParts = subBab.Konten.Split(new[] { ' ' }, 2);
-                                    bool startsWithNumberedLabel = subBabContentParts.Length > 1 && Regex.IsMatch(subBabContentParts[0], @"^(\d+\.?)+$");
-
-                                    if (startsWithNumberedLabel)
-                                    {
-                                        contentColumn.Item().ShowOnce().PaddingBottom(8).Row(row =>
-                                        {
-                                            row.Spacing(5);
-                                            row.ConstantItem(30).AlignTop().Text(subBabContentParts[0]);
-                                            row.RelativeItem().Text(subBabContentParts[1]).Justify();
-                                        });
-                                    }
-                                    else
-                                    {
-                                        contentColumn.Item().PaddingBottom(8).Text(subBab.Konten).Justify();
-                                    }
+                                    row.ConstantItem(30).AlignTop().Text(subBabLabel);
                                 }
-
-                                if (subBab.Poin != null && subBab.Poin.Any())
-                                {
-                                    RenderPoin(contentColumn, subBab.Poin, 35f);
-                                }
-                            }
+                                row.RelativeItem().Text(subBab.Konten).Justify();
+                            });
                         }
-                    });
-                });
-            }
+
+                        // Panggil fungsi render hierarkis yang baru
+                        if (subBab.Poin != null && subBab.Poin.Any())
+                        {
+                            // Mulai dari parentId null (level teratas), depth 0, dan indent awal
+                            RenderHierarchicalPoin(contentColumn, subBab.Poin, null, 0, 35f);
+                        }
+                    }
+                }
+            });
+        });
+    }
 
             column.Item().PaddingTop(30).Text("DEMIKIANLAH, Para Pihak telah menandatangani Perjanjian ini pada hari dan tanggal yang disebutkan di atas.").Justify();
 
@@ -2097,33 +2102,78 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        void RenderPoin(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
+        void RenderHierarchicalPoin(ColumnDescriptor column, List<PoinModel> allPoinForSubBab, int? parentId, int depth, float indent)
         {
-            if (poinList == null || !poinList.Any()) return;
-            foreach (var poin in poinList.OrderBy(p => p.UrutanTampil))
+            // 1. Ambil semua anak langsung dari parentId saat ini
+            var children = allPoinForSubBab
+                .Where(p => p.ParentId == parentId) // <-- Asumsi model Anda punya PoinModel.ParentId
+                .OrderBy(p => p.UrutanTampil)
+                .ToList();
+
+            if (!children.Any()) return;
+
+            // 2. Loop melalui anak-anak dan gunakan indeksnya (i) untuk penomoran
+            for (int i = 0; i < children.Count; i++)
             {
-                var text = poin.TeksPoin ?? string.Empty;
-                var parts = text.Split(new[] { ' ' }, 2);
-                bool isListItem = parts.Length > 1 && (Regex.IsMatch(parts[0], @"^(\d+\.?)+$") || Regex.IsMatch(parts[0], @"^[a-zA-Z]+\.$") || Regex.IsMatch(parts[0], @"^[ivxlcdm]+\.$", RegexOptions.IgnoreCase));
-                var itemContainer = column.Item().PaddingBottom(8);
-                if (isListItem)
+                var poin = children[i];
+
+                // 3. Hasilkan nomor berdasarkan kedalaman (depth) dan indeks (i)
+                string numberLabel = GetNumberingLabel(depth, i);
+
+                // 4. Render baris
+                column.Item().PaddingLeft(indent).Row(row =>
                 {
-                    itemContainer.PaddingLeft(initialIndent).Row(row =>
-                    {
-                        row.Spacing(5);
-                        row.ConstantItem(25).ShowOnce().AlignTop().Text(parts[0]);
-                        row.RelativeItem().Text(parts[1]).Justify();
-                    });
-                }
-                else
+                    row.Spacing(5);
+                    row.ConstantItem(25).AlignTop().Text(numberLabel); // Label nomor yang baru dibuat
+                    row.RelativeItem().Text(poin.TeksPoin).Justify(); // Teks asli dari database
+                });
+
+                // 5. Panggil fungsi ini lagi (rekursi) untuk anak-anak dari poin saat ini
+                RenderHierarchicalPoin(column, allPoinForSubBab, poin.Id, depth + 1, indent + 20f);
+            }
+        }
+
+        string GetNumberingLabel(int depth, int index)
+        {
+            switch (depth % 4) // Menggunakan modulo untuk siklus penomoran jika lebih dari 4 level
+            {
+                case 0: // a, b, c
+                    return $"{(char)('a' + index)}.";
+                case 1: // i, ii, iii
+                    return $"{ToRoman(index + 1).ToLower()}.";
+                case 2: // 1), 2), 3)
+                    return $"{index + 1})";
+                case 3: // (a), (b), (c)
+                    return $"({(char)('a' + index)})";
+                default:
+                    return $"{index + 1}.";
+            }
+        }
+
+        string ToRoman(int number)
+        {
+            if (number < 1) return string.Empty;
+            if (number >= 4000) return number.ToString(); // Batas
+            var romanNumerals = new[]
+            {
+        new { Value = 1000, Symbol = "M" }, new { Value = 900, Symbol = "CM" },
+        new { Value = 500, Symbol = "D" }, new { Value = 400, Symbol = "CD" },
+        new { Value = 100, Symbol = "C" }, new { Value = 90, Symbol = "XC" },
+        new { Value = 50, Symbol = "L" }, new { Value = 40, Symbol = "XL" },
+        new { Value = 10, Symbol = "X" }, new { Value = 9, Symbol = "IX" },
+        new { Value = 5, Symbol = "V" }, new { Value = 4, Symbol = "IV" },
+        new { Value = 1, Symbol = "I" }
+    };
+            var result = new System.Text.StringBuilder();
+            foreach (var numeral in romanNumerals)
+            {
+                while (number >= numeral.Value)
                 {
-                    itemContainer.PaddingLeft(initialIndent).Text(text).Justify();
-                }
-                if (poin.SubPoin != null && poin.SubPoin.Any())
-                {
-                    RenderPoin(column, poin.SubPoin, initialIndent + 30f);
+                    result.Append(numeral.Symbol);
+                    number -= numeral.Value;
                 }
             }
+            return result.ToString();
         }
 
         void RenderRekeningBankFromModel(ColumnDescriptor column)

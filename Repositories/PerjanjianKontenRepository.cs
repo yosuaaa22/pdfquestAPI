@@ -4,30 +4,26 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using pdfquestAPI.Documents.Models;
 using pdfquestAPI.Models;
 
 namespace pdfquestAPI.Repositories
 {
+    // DTOs untuk operasi CRUD Konten
     public class UpdateKontenDto { public string Konten { get; set; } }
     public class CreateKontenDto { public int IdPerjanjian { get; set; } public int? ParentId { get; set; } public string LevelType { get; set; } public string Konten { get; set; } }
 
-    public class UpdateKontenByPathDto
-    {
-        // Path berisi urutan konten dari Bab -> SubBab -> Poin
-        // Contoh: ["BAB I KETENTUAN UMUM", "1.1 Definisi", "a. Hari kerja..."]
-        public List<string> Path { get; set; }
-        
-        // Teks baru untuk menggantikan konten lama
-        public string NewKonten { get; set; }
-    }
     public class PerjanjianKontenRepository
     {
         private readonly string _connectionString;
-        public PerjanjianKontenRepository(IConfiguration configuration) { _connectionString = configuration.GetConnectionString("DefaultConnection"); }
 
+        public PerjanjianKontenRepository(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
+
+        // Kelas internal privat untuk menampung data mentah dari database
         private class PerjanjianKontenData
         {
             public int Id { get; set; }
@@ -37,252 +33,20 @@ namespace pdfquestAPI.Repositories
             public int UrutanTampil { get; set; }
         }
 
-        public async Task TambahDanUrutkanUlangKontenAsync(CreateKontenDto dto)
-        {
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                var cmd = new SqlCommand("INSERT INTO Perjanjian_Konten (id_perjanjian, parent_id, level_type, konten, urutan_tampil) VALUES (@idPerjanjian, @parentId, @levelType, @konten, 999);", conn);
-                cmd.Parameters.AddWithValue("@idPerjanjian", dto.IdPerjanjian);
-                cmd.Parameters.AddWithValue("@parentId", (object)dto.ParentId ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@levelType", dto.LevelType);
-                cmd.Parameters.AddWithValue("@konten", dto.Konten);
-                await cmd.ExecuteNonQueryAsync();
-            }
-            await PerbaikiSeluruhPenomoranAsync(dto.IdPerjanjian);
-        }
-
-        public async Task HapusDanUrutkanUlangKontenAsync(int kontenId, int perjanjianId)
-        {
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                var cmd = new SqlCommand("sp_HapusKontenDanAnaknya", conn) { CommandType = CommandType.StoredProcedure };
-                cmd.Parameters.AddWithValue("@id_konten_dihapus", kontenId);
-                await cmd.ExecuteNonQueryAsync();
-            }
-            await PerbaikiSeluruhPenomoranAsync(perjanjianId);
-        }
-
-        public async Task PerbaikiSeluruhPenomoranAsync(int perjanjianId)
-        {
-            var allItems = new List<PerjanjianKontenData>();
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                var cmd = new SqlCommand("SELECT id, parent_id, konten, level_type, urutan_tampil FROM Perjanjian_Konten WHERE id_perjanjian = @idPerjanjian ORDER BY urutan_tampil, id", conn);
-                cmd.Parameters.AddWithValue("@idPerjanjian", perjanjianId);
-                await conn.OpenAsync();
-                using (var reader = await cmd.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        allItems.Add(new PerjanjianKontenData
-                        {
-                            Id = (int)reader["id"],
-                            ParentId = reader.IsDBNull(reader.GetOrdinal("parent_id")) ? null : (int?)reader["parent_id"],
-                            Konten = reader["konten"] as string,
-                            LevelType = reader["level_type"] as string,
-                            UrutanTampil = (int)reader["urutan_tampil"]
-                        });
-                    }
-                }
-            }
-
-            if (!allItems.Any()) return;
-
-            var itemLookup = allItems.ToDictionary(item => item.Id);
-            var childrenLookup = allItems.Where(item => item.ParentId.HasValue).GroupBy(item => item.ParentId.Value)
-                                        .ToDictionary(g => g.Key, g => g.OrderBy(i => i.UrutanTampil).ThenBy(i => i.Id).ToList());
-            var updateCommands = new List<SqlCommand>();
-
-            RecursiveRenumber(null, "", null);
-
-            void RecursiveRenumber(int? currentParentId, string parentPrefix, string parentLevelType)
-            {
-                List<PerjanjianKontenData> children;
-                if (currentParentId == null) children = allItems.Where(i => i.ParentId == null).OrderBy(i => i.UrutanTampil).ThenBy(i => i.Id).ToList();
-                else if (!childrenLookup.TryGetValue(currentParentId.Value, out children)) return;
-
-                if (parentLevelType == "Judul" && children.Count == 1)
-                {
-                    var singleChild = children.First();
-                    var cleanText = GetCleanText(singleChild.Konten);
-                    var updateCmd = new SqlCommand("UPDATE Perjanjian_Konten SET konten = @konten, urutan_tampil = @urutan WHERE id = @id");
-                    updateCmd.Parameters.AddWithValue("@konten", cleanText);
-                    updateCmd.Parameters.AddWithValue("@urutan", 1);
-                    updateCmd.Parameters.AddWithValue("@id", singleChild.Id);
-                    updateCommands.Add(updateCmd);
-                    RecursiveRenumber(singleChild.Id, "", singleChild.LevelType);
-                    return;
-                }
-
-                string numberingStyle = "numeric";
-                if (children.Any())
-                {
-                    var firstChild = children.First();
-                    if (firstChild.LevelType == "Judul") numberingStyle = "numeric_bab";
-                    else if (firstChild.LevelType == "SubBab") numberingStyle = "numeric_subbab";
-                    else
-                    {
-                        var firstChildParts = firstChild.Konten?.Trim().Split(new[] { ' ' }, 2);
-                        if (firstChildParts?.Length > 1)
-                        {
-                            var prefix = firstChildParts[0];
-                            if (Regex.IsMatch(prefix, @"^[ivxlcdm]+\.$", RegexOptions.IgnoreCase)) numberingStyle = "roman";
-                            else if (Regex.IsMatch(prefix, @"^[a-z]\.$", RegexOptions.IgnoreCase)) numberingStyle = "alphabetic";
-                        }
-                    }
-                }
-
-                for (int i = 0; i < children.Count; i++)
-                {
-                    var item = children[i];
-                    int newUrutan = i + 1;
-                    string newPrefix;
-
-                    switch (numberingStyle)
-                    {
-                        case "alphabetic": newPrefix = $"{ToAlphabetic(newUrutan)}."; break;
-                        case "roman": newPrefix = $"{ToRoman(newUrutan).ToLower()}."; break;
-                        case "numeric_bab": newPrefix = $"{newUrutan}."; break;
-                        case "numeric_subbab": newPrefix = $"{parentPrefix}{newUrutan}"; break;
-                        default: newPrefix = $"{parentPrefix}{newUrutan}."; break;
-                    }
-
-                    var cleanText = GetCleanText(item.Konten);
-                    var newKonten = $"{newPrefix} {cleanText}";
-
-                    var updateCommand = new SqlCommand("UPDATE Perjanjian_Konten SET konten = @konten, urutan_tampil = @urutan WHERE id = @id");
-                    updateCommand.Parameters.AddWithValue("@konten", newKonten);
-                    updateCommand.Parameters.AddWithValue("@urutan", newUrutan);
-                    updateCommand.Parameters.AddWithValue("@id", item.Id);
-                    updateCommands.Add(updateCommand);
-
-                    string nextPrefix = numberingStyle == "numeric_subbab" ? newPrefix + "." : newPrefix;
-                    RecursiveRenumber(item.Id, nextPrefix, item.LevelType);
-                }
-            }
-
-            if (updateCommands.Any())
-            {
-                using (var conn = new SqlConnection(_connectionString))
-                {
-                    await conn.OpenAsync();
-                    using (var transaction = conn.BeginTransaction())
-                    {
-                        foreach (var cmd in updateCommands)
-                        {
-                            cmd.Connection = conn;
-                            cmd.Transaction = transaction;
-                            await cmd.ExecuteNonQueryAsync();
-                        }
-                        transaction.Commit();
-                    }
-                }
-            }
-        }
-
-        private string GetCleanText(string text)
-        {
-            if (string.IsNullOrEmpty(text)) return string.Empty;
-            var parts = text.Trim().Split(new[] { ' ' }, 2);
-            if (parts.Length > 1 && IsValidPrefix(parts[0]))
-            {
-                return parts[1];
-            }
-            return text;
-        }
-
-        private bool IsValidPrefix(string prefix)
-        {
-            return Regex.IsMatch(prefix, @"^([\d\.]+|[a-zA-Z]+\.|[ivxlcdm]+\.)$");
-        }
-
-        public async Task UpdateKontenAsync(int kontenId, string newKonten)
-        {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand("UPDATE Perjanjian_Konten SET konten = @konten WHERE id = @id", connection);
-                command.Parameters.AddWithValue("@konten", newKonten);
-                command.Parameters.AddWithValue("@id", kontenId);
-                await connection.OpenAsync();
-                await command.ExecuteNonQueryAsync();
-            }
-        }
-
-        public async Task<object> CariKontenByKeywordAsync(int perjanjianId, string kataKunci)
-        {
-            object result = null;
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                // Menggunakan TOP 1 untuk mengambil hasil pertama yang cocok, sesuai contoh di screenshot.
-                // Menggunakan LIKE untuk pencarian teks parsial.
-                var command = new SqlCommand(
-                    "SELECT TOP 1 id, parent_id, konten, urutan_tampil FROM Perjanjian_Konten " +
-                    "WHERE id_perjanjian = @idPerjanjian AND konten LIKE @kataKunci " +
-                    "ORDER BY urutan_tampil, id", // Urutkan untuk hasil yang konsisten
-                    connection);
-
-                command.Parameters.AddWithValue("@idPerjanjian", perjanjianId);
-                command.Parameters.AddWithValue("@kataKunci", $"%{kataKunci}%"); // Wildcard untuk pencarian substring
-
-                await connection.OpenAsync();
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    if (await reader.ReadAsync())
-                    {
-                        result = new
-                        {
-                            id = (int)reader["id"],
-                            parentId = reader.IsDBNull(reader.GetOrdinal("parent_id")) ? (int?)null : (int)reader["parent_id"],
-                            konten = reader["konten"] as string,
-                            urutanTampil = (int)reader["urutan_tampil"]
-                        };
-                    }
-                }
-            }
-            return result;
-        }
-
-        private string ToAlphabetic(int number)
-        {
-            string result = string.Empty;
-            while (number > 0)
-            {
-                int remainder = (number - 1) % 26;
-                result = (char)('a' + remainder) + result;
-                number = (number - remainder) / 26;
-            }
-            return result;
-        }
-
-        private string ToRoman(int number)
-        {
-            if (number < 1) return string.Empty;
-            if (number >= 1000) return "M" + ToRoman(number - 1000);
-            if (number >= 900) return "CM" + ToRoman(number - 900);
-            if (number >= 500) return "D" + ToRoman(number - 500);
-            if (number >= 400) return "CD" + ToRoman(number - 400);
-            if (number >= 100) return "C" + ToRoman(number - 100);
-            if (number >= 90) return "XC" + ToRoman(number - 90);
-            if (number >= 50) return "L" + ToRoman(number - 50);
-            if (number >= 40) return "XL" + ToRoman(number - 40);
-            if (number >= 10) return "X" + ToRoman(number - 10);
-            if (number >= 9) return "IX" + ToRoman(number - 9);
-            if (number >= 5) return "V" + ToRoman(number - 5);
-            if (number >= 4) return "IV" + ToRoman(number - 4);
-            if (number >= 1) return "I" + ToRoman(number - 1);
-            throw new ArgumentOutOfRangeException(nameof(number), "Nomor Romawi di luar jangkauan");
-        }
-
+        /// <summary>
+        /// Metode utama yang dipanggil oleh Controller untuk membangun model PDF.
+        /// </summary>
         public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
         {
             var perjanjian = GetPerjanjianFromDb(perjanjianId);
             if (perjanjian == null) return null;
+
             var pihakPertama = GetPihakPertamaFromDb(perjanjian.IdPihakPertama);
             var pihakKedua = GetPenyediaLayananFromDb(perjanjian.IdPenyedia);
             var flatKontenList = GetFlatKontenListFromDb(perjanjianId);
+
             var (ketentuanKhusus, lampiran) = MapToDocumentModel(flatKontenList);
+
             return new PerjanjianDocumentModel
             {
                 PihakPertama = pihakPertama,
@@ -291,6 +55,101 @@ namespace pdfquestAPI.Repositories
                 KetentuanKhusus = ketentuanKhusus,
                 Lampiran = lampiran
             };
+        }
+
+        /// <summary>
+        /// Mengubah daftar data datar dari database menjadi struktur hierarkis yang dibutuhkan oleh PDF.
+        /// </summary>
+        private (List<BabModel> KetentuanKhusus, List<BabModel> Lampiran) MapToDocumentModel(List<PerjanjianKontenData> flatList)
+        {
+            var ketentuanKhususList = new List<BabModel>();
+            var lampiranList = new List<BabModel>();
+
+            if (!flatList.Any()) return (ketentuanKhususList, lampiranList);
+
+            var itemsByParent = flatList.ToLookup(item => item.ParentId);
+            var rootItems = itemsByParent[null].Where(i => i.LevelType == "Judul").OrderBy(i => i.UrutanTampil);
+
+            foreach (var babData in rootItems)
+            {
+                var babModel = new BabModel
+                {
+                    JudulTeks = babData.Konten,
+                    UrutanTampil = babData.UrutanTampil,
+                    SubBab = new List<SubBabModel>()
+                };
+
+                var subBabItems = itemsByParent[babData.Id].Where(i => i.LevelType == "SubBab").OrderBy(i => i.UrutanTampil);
+
+                foreach (var subBabData in subBabItems)
+                {
+                    var allDescendantPoints = new List<PoinModel>();
+                    FindAllDescendantPoints(subBabData.Id, itemsByParent, allDescendantPoints);
+
+                    var subBabModel = new SubBabModel
+                    {
+                        Konten = subBabData.Konten,
+                        UrutanTampil = subBabData.UrutanTampil,
+                        Poin = allDescendantPoints
+                    };
+                    babModel.SubBab.Add(subBabModel);
+                }
+
+                if (babData.Konten != null && babData.Konten.ToUpper().Contains("LAMPIRAN"))
+                    lampiranList.Add(babModel);
+                else
+                    ketentuanKhususList.Add(babModel);
+            }
+
+            return (ketentuanKhususList, lampiranList);
+        }
+
+        /// <summary>
+        /// Fungsi pembantu rekursif untuk mencari semua turunan poin dan menyusunnya menjadi satu daftar datar.
+        /// </summary>
+        private void FindAllDescendantPoints(int parentId, ILookup<int?, PerjanjianKontenData> itemsByParent, List<PoinModel> collectedPoints)
+        {
+            var children = itemsByParent[parentId].OrderBy(i => i.UrutanTampil);
+
+            foreach (var childData in children)
+            {
+                collectedPoints.Add(new PoinModel
+                {
+                    Id = childData.Id,
+                    ParentId = childData.ParentId,
+                    TeksPoin = childData.Konten,
+                    UrutanTampil = childData.UrutanTampil
+                });
+                FindAllDescendantPoints(childData.Id, itemsByParent, collectedPoints);
+            }
+        }
+
+        #region Metode Akses Data dari Database
+
+        private List<PerjanjianKontenData> GetFlatKontenListFromDb(int perjanjianId)
+        {
+            var list = new List<PerjanjianKontenData>();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                var command = new SqlCommand("SELECT id, parent_id, level_type, konten, urutan_tampil FROM Perjanjian_Konten WHERE id_perjanjian = @idPerjanjian", connection);
+                command.Parameters.AddWithValue("@idPerjanjian", perjanjianId);
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PerjanjianKontenData
+                        {
+                            Id = (int)reader["id"],
+                            ParentId = reader.IsDBNull(reader.GetOrdinal("parent_id")) ? null : (int?)reader["parent_id"],
+                            LevelType = (string)reader["level_type"],
+                            Konten = reader["konten"] as string,
+                            UrutanTampil = (int)reader["urutan_tampil"]
+                        });
+                    }
+                }
+            }
+            return list;
         }
 
         private Perjanjian GetPerjanjianFromDb(int perjanjianId)
@@ -363,25 +222,25 @@ namespace pdfquestAPI.Repositories
                         penyedia = new PenyediaLayanan
                         {
                             IdPenyedia = (int)reader["id_penyedia"],
-                            NamaEntitasCalonProvider = (string)reader["nama_Entitas_calon_provider"],
+                            NamaEntitasCalonProvider = reader["nama_Entitas_calon_provider"] as string,
                             JenisPerusahaan = reader["jenis_perusahaan"] as string,
-                            NoNibPihakKedua = (string)reader["no_nib_pihak_kedua"],
+                            NoNibPihakKedua = reader["no_nib_pihak_kedua"] as string,
                             AlamatPemegangPolis = reader["alamat_pemegang_polis"] as string,
-                            NamaPerwakilan = (string)reader["nama_perwakilan"],
+                            NamaPerwakilan = reader["nama_perwakilan"] as string,
                             JabatanPerwakilan = reader["jabatan_perwakilan"] as string,
-                            JenisFasilitas = (string)reader["jenis_fasilitas"],
-                            NamaFasilitasKesehatan = (string)reader["nama_fasilitas_kesehatan"],
+                            JenisFasilitas = reader["jenis_fasilitas"] as string,
+                            NamaFasilitasKesehatan = reader["nama_fasilitas_kesehatan"] as string,
                             NamaDokumenIzin = reader["nama_dokumen_izin"] as string,
                             NomorDokumenIzin = reader["nomor_dokumen_izin"] as string,
-                            TanggalDokumenIzin = reader["tanggal_dokumen_izin"] as DateTime?,
+                            TanggalDokumenIzin = reader.IsDBNull(reader.GetOrdinal("tanggal_dokumen_izin")) ? null : (DateTime?)reader["tanggal_dokumen_izin"],
                             InstansiPenerbitIzin = reader["instansi_penerbit_izin"] as string,
-                            NamaBank = (string)reader["Nama_Bank"],
+                            NamaBank = reader["Nama_Bank"] as string,
                             NamaCabangBank = reader["nama_cabang_bank"] as string,
-                            NomorRekening = (string)reader["Nomor_rekening"],
-                            PemilikRekening = (string)reader["pemilik_rekening"],
-                            NamaPemilikNpwp = (string)reader["NAMA_PEMILIK_NPWP"],
-                            NoNpwp = (string)reader["NO_NPWP"],
-                            JenisNpwp = (string)reader["jenis_npwp"]
+                            NomorRekening = reader["Nomor_rekening"] as string,
+                            PemilikRekening = reader["pemilik_rekening"] as string,
+                            NamaPemilikNpwp = reader["NAMA_PEMILIK_NPWP"] as string,
+                            NoNpwp = reader["NO_NPWP"] as string,
+                            JenisNpwp = reader["jenis_npwp"] as string
                         };
                     }
                 }
@@ -389,102 +248,80 @@ namespace pdfquestAPI.Repositories
             return penyedia;
         }
 
-        private List<PerjanjianKontenData> GetFlatKontenListFromDb(int perjanjianId)
+        #endregion
+
+        #region Metode CRUD Konten
+
+        public async Task<object> CariKontenByKeywordAsync(int perjanjianId, string kataKunci)
         {
-            var list = new List<PerjanjianKontenData>();
+            object result = null;
             using (var connection = new SqlConnection(_connectionString))
             {
-                var command = new SqlCommand("SELECT id, parent_id, level_type, konten, urutan_tampil FROM Perjanjian_Konten WHERE id_perjanjian = @idPerjanjian ORDER BY urutan_tampil, id", connection);
+                var command = new SqlCommand(
+                    "SELECT TOP 1 id, parent_id, konten, urutan_tampil FROM Perjanjian_Konten " +
+                    "WHERE id_perjanjian = @idPerjanjian AND konten LIKE @kataKunci " +
+                    "ORDER BY urutan_tampil, id", connection);
+
                 command.Parameters.AddWithValue("@idPerjanjian", perjanjianId);
-                connection.Open();
-                using (var reader = command.ExecuteReader())
+                command.Parameters.AddWithValue("@kataKunci", $"%{kataKunci}%");
+
+                await connection.OpenAsync();
+                using (var reader = await command.ExecuteReaderAsync())
                 {
-                    while (reader.Read())
+                    if (await reader.ReadAsync())
                     {
-                        list.Add(new PerjanjianKontenData
+                        result = new
                         {
-                            Id = (int)reader["id"],
-                            ParentId = reader.IsDBNull(reader.GetOrdinal("parent_id")) ? null : (int?)reader["parent_id"],
-                            LevelType = (string)reader["level_type"],
-                            Konten = reader["konten"] as string,
-                            UrutanTampil = (int)reader["urutan_tampil"]
-                        });
+                            id = (int)reader["id"],
+                            parentId = reader.IsDBNull(reader.GetOrdinal("parent_id")) ? (int?)null : (int)reader["parent_id"],
+                            konten = reader["konten"] as string,
+                            urutanTampil = (int)reader["urutan_tampil"]
+                        };
                     }
                 }
             }
-            return list;
+            return result;
         }
 
-        // pdfquestAPI/Repositories/PerjanjianKontenRepository.cs
-
-        // File: pdfquestAPI/Repositories/PerjanjianKontenRepository.cs
-
-private (List<BabModel> KetentuanKhusus, List<BabModel> Lampiran) MapToDocumentModel(List<PerjanjianKontenData> flatList)
-{
-    var babLookup = new Dictionary<int, BabModel>();
-    var subBabLookup = new Dictionary<int, SubBabModel>();
-    var poinLookup = new Dictionary<int, PoinModel>();
-    var ketentuanKhususList = new List<BabModel>();
-    var lampiranList = new List<BabModel>();
-
-    // Proses Judul (Bab)
-    foreach (var item in flatList.Where(x => x.LevelType == "Judul").OrderBy(x => x.UrutanTampil))
-    {
-        var bab = new BabModel { JudulTeks = item.Konten, UrutanTampil = item.UrutanTampil, SubBab = new List<SubBabModel>() };
-        babLookup[item.Id] = bab;
-        if (item.Konten != null && item.Konten.ToUpper().Contains("LAMPIRAN"))
+        public async Task TambahDanUrutkanUlangKontenAsync(CreateKontenDto dto)
         {
-            lampiranList.Add(bab);
-        }
-        else
-        {
-            ketentuanKhususList.Add(bab);
-        }
-    }
-
-    // Proses SubBab
-    foreach (var item in flatList.Where(x => x.LevelType == "SubBab").OrderBy(x => x.UrutanTampil))
-    {
-        if (item.ParentId.HasValue && babLookup.TryGetValue(item.ParentId.Value, out var parentBab))
-        {
-            var subBab = new SubBabModel { Konten = item.Konten, UrutanTampil = item.UrutanTampil, Poin = new List<PoinModel>() };
-            subBabLookup[item.Id] = subBab;
-            parentBab.SubBab.Add(subBab);
-        }
-    }
-
-    // Proses Poin (termasuk yang berisi tag tabel)
-    // Logika ini hanya memetakan data mentah tanpa parsing.
-    foreach (var item in flatList.Where(x => x.LevelType == "Poin" || x.LevelType == "Tabel").OrderBy(x => x.UrutanTampil))
-    {
-        var poin = new PoinModel 
-        { 
-            Id = item.Id, 
-            ParentId = item.ParentId, 
-            TeksPoin = item.Konten, // <-- PENTING: Ambil string mentah apa adanya
-            UrutanTampil = item.UrutanTampil, 
-            SubPoin = new List<PoinModel>() 
-        };
-        poinLookup[item.Id] = poin;
-
-        if (item.ParentId.HasValue)
-        {
-            if (subBabLookup.TryGetValue(item.ParentId.Value, out var parentSubBab))
+            // Note: PerbaikiSeluruhPenomoranAsync is a complex method that re-writes content. 
+            // It might be better to call it separately or ensure its logic is what you intend.
+            using (var conn = new SqlConnection(_connectionString))
             {
-                parentSubBab.Poin.Add(poin);
-            }
-            else if (poinLookup.TryGetValue(item.ParentId.Value, out var parentPoin))
-            {
-                parentPoin.SubPoin.Add(poin);
+                await conn.OpenAsync();
+                var cmd = new SqlCommand("INSERT INTO Perjanjian_Konten (id_perjanjian, parent_id, level_type, konten, urutan_tampil) VALUES (@idPerjanjian, @parentId, @levelType, @konten, 999);", conn);
+                cmd.Parameters.AddWithValue("@idPerjanjian", dto.IdPerjanjian);
+                cmd.Parameters.AddWithValue("@parentId", (object)dto.ParentId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@levelType", dto.LevelType);
+                cmd.Parameters.AddWithValue("@konten", dto.Konten);
+                await cmd.ExecuteNonQueryAsync();
             }
         }
-    }
 
-    return (ketentuanKhususList, lampiranList);
-}
+        public async Task UpdateKontenAsync(int kontenId, string newKonten)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                var command = new SqlCommand("UPDATE Perjanjian_Konten SET konten = @konten WHERE id = @id", connection);
+                command.Parameters.AddWithValue("@konten", newKonten);
+                command.Parameters.AddWithValue("@id", kontenId);
+                await connection.OpenAsync();
+                await command.ExecuteNonQueryAsync();
+            }
+        }
 
+        public async Task HapusDanUrutkanUlangKontenAsync(int kontenId, int perjanjianId)
+        {
+            using (var conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var cmd = new SqlCommand("sp_HapusKontenDanAnaknya", conn) { CommandType = CommandType.StoredProcedure };
+                cmd.Parameters.AddWithValue("@id_konten_dihapus", kontenId);
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
 
-
-
+        #endregion
     }
 }

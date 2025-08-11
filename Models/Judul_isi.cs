@@ -25,7 +25,7 @@ namespace pdfquestAPI.Models
         // OPSIONAL TAPI SANGAT DIREKOMENDASIKAN: Tambahkan Navigation Property
         [ForeignKey("IdPenyedia")]
         public virtual PenyediaLayanan? PenyediaLayanan { get; set; }
-        
+        public virtual ICollection<SubBabKetentuanKhusus> SubBab { get; set; }
         // public virtual ICollection<SubBabKetentuanKhusus> SubBabKetentuanKhusus { get; set; } = new List<SubBabKetentuanKhusus>();
 
     }

@@ -44,5 +44,31 @@ namespace pdfquestAPI.Controllers
                 return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF.");
             }
         }
+
+        // [HttpGet("perjanjian/{perjanjianId}/kustom")]
+        // [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+        // [ProducesResponseType(StatusCodes.Status404NotFound)]
+        // [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        // public async Task<IActionResult> GeneratePerjanjianKustomPdf(int perjanjianId)
+        // {
+        //     try
+        //     {
+        //         // Memanggil FUNGSI SERVICE YANG SAMA PERSIS dengan endpoint di atas
+        //         var pdfBytes = await _pdfService.GeneratePerjanjianPdfAsync(perjanjianId);
+
+        //         string fileName = $"PKS_Perjanjian_Kustom_{perjanjianId}_{DateTime.Now:yyyyMMdd}.pdf";
+        //         return File(pdfBytes, "application/pdf", fileName);
+        //     }
+        //     catch (KeyNotFoundException ex)
+        //     {
+        //         _logger.LogWarning(ex.Message);
+        //         return NotFound(new { message = ex.Message });
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, $"Terjadi error saat membuat PDF Kustom untuk perjanjian ID: {perjanjianId}");
+        //         return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF.");
+        //     }
+        // }
     }
 }

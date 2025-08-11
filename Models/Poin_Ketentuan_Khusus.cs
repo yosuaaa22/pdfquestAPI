@@ -17,9 +17,12 @@ namespace pdfquestAPI.Models
         public string? TeksPoin { get; set; }
 
         [Column("parent")]
-        public int? Parent { get; set; } // Menggunakan int? karena bisa NULL
+        public int? Parent { get; set; }
 
         [Column("urutan_tampil")]
         public int UrutanTampil { get; set; }
+
+        [ForeignKey("IdSubBab")]
+    public virtual SubBabKetentuanKhusus SubBabKetentuanKhusus { get; set; }
     }
 }

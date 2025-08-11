@@ -18,5 +18,12 @@ namespace pdfquestAPI.Models
 
         [Column("urutan_tampil")]
         public int UrutanTampil { get; set; }
+
+        [ForeignKey("IdJudul")]
+    public virtual JudulIsi JudulIsi { get; set; }
+
+    // Properti navigasi ke PoinKetentuanKhusus (anak-anaknya)
+    public virtual ICollection<PoinKetentuanKhusus> Poin { get; set; }
+
     }
 }
