@@ -2103,57 +2103,59 @@ namespace pdfquestAPI.Documents
         }
 
         void RenderHierarchicalPoin(ColumnDescriptor column, List<PoinModel> allPoinForSubBab, int? parentId, int depth, float indent)
+{
+    // Mengambil semua anak langsung dari parentId saat ini
+    var children = allPoinForSubBab
+        .Where(p => p.ParentId == parentId)
+        .OrderBy(p => p.UrutanTampil)
+        .ToList();
+
+    if (!children.Any()) return;
+
+    // Loop melalui anak-anak untuk dirender
+    for (int i = 0; i < children.Count; i++)
+    {
+        var poin = children[i];
+        
+        // Hasilkan nomor berdasarkan kedalaman (depth) dan indeks (i)
+        string numberLabel = GetNumberingLabel(depth, i);
+
+        // Render baris
+        column.Item().PaddingLeft(indent).PaddingBottom(4).Row(row =>
         {
-            // 1. Ambil semua anak langsung dari parentId saat ini
-            var children = allPoinForSubBab
-                .Where(p => p.ParentId == parentId) // <-- Asumsi model Anda punya PoinModel.ParentId
-                .OrderBy(p => p.UrutanTampil)
-                .ToList();
+            row.Spacing(5);
+            row.ConstantItem(30).AlignTop().Text(numberLabel);
+            row.RelativeItem().Text(poin.TeksPoin ?? string.Empty).Justify();
+        });
 
-            if (!children.Any()) return;
-
-            // 2. Loop melalui anak-anak dan gunakan indeksnya (i) untuk penomoran
-            for (int i = 0; i < children.Count; i++)
-            {
-                var poin = children[i];
-
-                // 3. Hasilkan nomor berdasarkan kedalaman (depth) dan indeks (i)
-                string numberLabel = GetNumberingLabel(depth, i);
-
-                // 4. Render baris
-                column.Item().PaddingLeft(indent).Row(row =>
-                {
-                    row.Spacing(5);
-                    row.ConstantItem(25).AlignTop().Text(numberLabel); // Label nomor yang baru dibuat
-                    row.RelativeItem().Text(poin.TeksPoin).Justify(); // Teks asli dari database
-                });
-
-                // 5. Panggil fungsi ini lagi (rekursi) untuk anak-anak dari poin saat ini
-                RenderHierarchicalPoin(column, allPoinForSubBab, poin.Id, depth + 1, indent + 20f);
-            }
-        }
+        // Panggil fungsi ini lagi untuk anak-anak dari poin saat ini
+        // dengan MENAIKKAN KEDALAMAN (depth + 1). Ini adalah bagian kuncinya.
+        RenderHierarchicalPoin(column, allPoinForSubBab, poin.Id, depth + 1, indent + 20f);
+    }
+}
 
         string GetNumberingLabel(int depth, int index)
         {
-            switch (depth % 4) // Menggunakan modulo untuk siklus penomoran jika lebih dari 4 level
+            switch (depth % 4) // Menggunakan modulo untuk siklus penomoran
             {
-                case 0: // a, b, c
+                case 0: // Level 1 -> a, b, c
                     return $"{(char)('a' + index)}.";
-                case 1: // i, ii, iii
+                case 1: // Level 2 -> i, ii, iii
                     return $"{ToRoman(index + 1).ToLower()}.";
-                case 2: // 1), 2), 3)
+                case 2: // Level 3 -> 1), 2), 3)
                     return $"{index + 1})";
-                case 3: // (a), (b), (c)
+                case 3: // Level 4 -> (a), (b), (c)
                     return $"({(char)('a' + index)})";
                 default:
                     return $"{index + 1}.";
             }
         }
 
+
         string ToRoman(int number)
         {
             if (number < 1) return string.Empty;
-            if (number >= 4000) return number.ToString(); // Batas
+            if (number >= 4000) return number.ToString();
             var romanNumerals = new[]
             {
         new { Value = 1000, Symbol = "M" }, new { Value = 900, Symbol = "CM" },
@@ -2175,6 +2177,7 @@ namespace pdfquestAPI.Documents
             }
             return result.ToString();
         }
+
 
         void RenderRekeningBankFromModel(ColumnDescriptor column)
         {

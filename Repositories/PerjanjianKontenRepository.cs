@@ -18,9 +18,9 @@ namespace pdfquestAPI.Repositories
     {
         private readonly string _connectionString;
 
-        public PerjanjianKontenRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        public PerjanjianKontenRepository(IConfiguration configuration) 
+        { 
+            _connectionString = configuration.GetConnectionString("DefaultConnection"); 
         }
 
         // Kelas internal privat untuk menampung data mentah dari database
@@ -36,15 +36,20 @@ namespace pdfquestAPI.Repositories
         /// <summary>
         /// Metode utama yang dipanggil oleh Controller untuk membangun model PDF.
         /// </summary>
-        public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
+        // Di dalam file: PerjanjianKontenRepository.cs
+
+// Di dalam file: PerjanjianKontenRepository.cs
+
+public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
         {
             var perjanjian = GetPerjanjianFromDb(perjanjianId);
             if (perjanjian == null) return null;
-
+            
             var pihakPertama = GetPihakPertamaFromDb(perjanjian.IdPihakPertama);
             var pihakKedua = GetPenyediaLayananFromDb(perjanjian.IdPenyedia);
             var flatKontenList = GetFlatKontenListFromDb(perjanjianId);
-
+            
+            // Panggil fungsi mapping yang sudah terbukti benar logikanya
             var (ketentuanKhusus, lampiran) = MapToDocumentModel(flatKontenList);
 
             return new PerjanjianDocumentModel
@@ -60,7 +65,7 @@ namespace pdfquestAPI.Repositories
         /// <summary>
         /// Mengubah daftar data datar dari database menjadi struktur hierarkis yang dibutuhkan oleh PDF.
         /// </summary>
-        private (List<BabModel> KetentuanKhusus, List<BabModel> Lampiran) MapToDocumentModel(List<PerjanjianKontenData> flatList)
+         private (List<BabModel> KetentuanKhusus, List<BabModel> Lampiran) MapToDocumentModel(List<PerjanjianKontenData> flatList)
         {
             var ketentuanKhususList = new List<BabModel>();
             var lampiranList = new List<BabModel>();
@@ -80,11 +85,21 @@ namespace pdfquestAPI.Repositories
                 };
 
                 var subBabItems = itemsByParent[babData.Id].Where(i => i.LevelType == "SubBab").OrderBy(i => i.UrutanTampil);
-
+                
                 foreach (var subBabData in subBabItems)
                 {
                     var allDescendantPoints = new List<PoinModel>();
                     FindAllDescendantPoints(subBabData.Id, itemsByParent, allDescendantPoints);
+
+                    // ▼▼ INILAH PERBAIKAN KUNCI-NYA ▼▼
+                    // Ubah ParentId dari poin level pertama menjadi null agar renderer bisa menemukannya.
+                    foreach (var poin in allDescendantPoints)
+                    {
+                        if (poin.ParentId == subBabData.Id)
+                        {
+                            poin.ParentId = null;
+                        }
+                    }
 
                     var subBabModel = new SubBabModel
                     {
@@ -94,7 +109,7 @@ namespace pdfquestAPI.Repositories
                     };
                     babModel.SubBab.Add(subBabModel);
                 }
-
+                
                 if (babData.Konten != null && babData.Konten.ToUpper().Contains("LAMPIRAN"))
                     lampiranList.Add(babModel);
                 else
@@ -103,17 +118,16 @@ namespace pdfquestAPI.Repositories
 
             return (ketentuanKhususList, lampiranList);
         }
-
         /// <summary>
         /// Fungsi pembantu rekursif untuk mencari semua turunan poin dan menyusunnya menjadi satu daftar datar.
         /// </summary>
-        private void FindAllDescendantPoints(int parentId, ILookup<int?, PerjanjianKontenData> itemsByParent, List<PoinModel> collectedPoints)
+         private void FindAllDescendantPoints(int parentId, ILookup<int?, PerjanjianKontenData> itemsByParent, List<PoinModel> collectedPoints)
         {
             var children = itemsByParent[parentId].OrderBy(i => i.UrutanTampil);
 
-            foreach (var childData in children)
+            foreach(var childData in children)
             {
-                collectedPoints.Add(new PoinModel
+                collectedPoints.Add(new PoinModel 
                 {
                     Id = childData.Id,
                     ParentId = childData.ParentId,
@@ -124,9 +138,10 @@ namespace pdfquestAPI.Repositories
             }
         }
 
+
         #region Metode Akses Data dari Database
 
-        private List<PerjanjianKontenData> GetFlatKontenListFromDb(int perjanjianId)
+          private List<PerjanjianKontenData> GetFlatKontenListFromDb(int perjanjianId) 
         {
             var list = new List<PerjanjianKontenData>();
             using (var connection = new SqlConnection(_connectionString))
