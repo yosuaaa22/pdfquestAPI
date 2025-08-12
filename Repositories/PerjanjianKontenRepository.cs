@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using pdfquestAPI.Documents.Models;
 using pdfquestAPI.Models;
+using pdfquestAPI.Interfaces;
 
 namespace pdfquestAPI.Repositories
 {
@@ -17,11 +18,14 @@ namespace pdfquestAPI.Repositories
     public class PerjanjianKontenRepository
     {
         private readonly string _connectionString;
+        private readonly IChangeLogService _logService;
 
-        public PerjanjianKontenRepository(IConfiguration configuration) 
-        { 
-            _connectionString = configuration.GetConnectionString("DefaultConnection"); 
+        public PerjanjianKontenRepository(IConfiguration configuration, IChangeLogService logService) // <-- TAMBAHAN
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _logService = logService; // <-- TAMBAHAN
         }
+
 
         // Kelas internal privat untuk menampung data mentah dari database
         private class PerjanjianKontenData
@@ -48,7 +52,8 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
             var pihakPertama = GetPihakPertamaFromDb(perjanjian.IdPihakPertama);
             var pihakKedua = GetPenyediaLayananFromDb(perjanjian.IdPenyedia);
             var flatKontenList = GetFlatKontenListFromDb(perjanjianId);
-            
+            var lampiranPicData = GetLampiranPicFromDb(perjanjian.IdPenyedia);
+            var lampiranTindakanMedisData = GetLampiranTindakanMedisFromDb(perjanjian.IdPenyedia);
             // Panggil fungsi mapping yang sudah terbukti benar logikanya
             var (ketentuanKhusus, lampiran) = MapToDocumentModel(flatKontenList);
 
@@ -58,7 +63,9 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
                 PihakKedua = pihakKedua,
                 Perjanjian = perjanjian,
                 KetentuanKhusus = ketentuanKhusus,
-                Lampiran = lampiran
+                Lampiran = lampiran,
+                LampiranPic = lampiranPicData,
+                LampiranTindakanMedis = lampiranTindakanMedisData
             };
         }
 
@@ -263,6 +270,56 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
             return penyedia;
         }
 
+        private List<PicModel> GetLampiranPicFromDb(int idPenyedia)
+        {
+            var list = new List<PicModel>();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                var command = new SqlCommand("SELECT JenisPIC, NamaPIC, NomorTelepon, AlamatEmail FROM Lampiran_PIC WHERE IdPenyedia = @idPenyedia", connection);
+                command.Parameters.AddWithValue("@idPenyedia", idPenyedia);
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PicModel
+                        {
+                            JenisPIC = reader["JenisPIC"] as string,
+                            NamaPIC = reader["NamaPIC"] as string,
+                            NomorTelepon = reader["NomorTelepon"] as string,
+                            AlamatEmail = reader["AlamatEmail"] as string
+                        });
+                    }
+                }
+            }
+            return list;
+        }
+        private List<TindakanMedisModel> GetLampiranTindakanMedisFromDb(int idPenyedia)
+{
+    var list = new List<TindakanMedisModel>();
+    using (var connection = new SqlConnection(_connectionString))
+    {
+        var command = new SqlCommand("SELECT JenisTindakanMedis, Tarif, Keterangan FROM Lampiran_TindakanMedis WHERE IdPenyedia = @idPenyedia", connection);
+        command.Parameters.AddWithValue("@idPenyedia", idPenyedia);
+        connection.Open();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                list.Add(new TindakanMedisModel
+                {
+                    JenisTindakanMedis = reader["JenisTindakanMedis"] as string,
+                    Tarif = reader.IsDBNull(reader.GetOrdinal("Tarif")) ? null : (decimal?)reader["Tarif"],
+                    Keterangan = reader["Keterangan"] as string
+                });
+            }
+        }
+    }
+    return list;
+}
+
+
+
         #endregion
 
         #region Metode CRUD Konten
@@ -311,6 +368,8 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
                 cmd.Parameters.AddWithValue("@levelType", dto.LevelType);
                 cmd.Parameters.AddWithValue("@konten", dto.Konten);
                 await cmd.ExecuteNonQueryAsync();
+                string pengguna = "admin_sementara"; // Ganti dengan user yang sedang login
+                await _logService.LogAsync(dto.IdPerjanjian, pengguna, "CREATE", $"Menambahkan konten baru: '{dto.Konten}'");
             }
         }
 
@@ -323,6 +382,7 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
                 command.Parameters.AddWithValue("@id", kontenId);
                 await connection.OpenAsync();
                 await command.ExecuteNonQueryAsync();
+                string pengguna = "admin_sementara";
             }
         }
 
@@ -334,6 +394,9 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
                 var cmd = new SqlCommand("sp_HapusKontenDanAnaknya", conn) { CommandType = CommandType.StoredProcedure };
                 cmd.Parameters.AddWithValue("@id_konten_dihapus", kontenId);
                 await cmd.ExecuteNonQueryAsync();
+                string pengguna = "admin_sementara";
+                await _logService.LogAsync(perjanjianId, pengguna, "DELETE", $"Menghapus konten (ID: {kontenId}) dan turunannya.");
+    
             }
         }
 

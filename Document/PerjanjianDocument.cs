@@ -2162,13 +2162,11 @@ namespace pdfquestAPI.Documents
         column.Item().PaddingLeft(indent).PaddingBottom(4).Row(row =>
         {
             row.Spacing(5);
-            row.ConstantItem(30).AlignTop().Text(numberLabel);
-            row.RelativeItem().Text(poin.TeksPoin ?? string.Empty).Justify();
+            row.ConstantItem(30).AlignTop().ShowOnce().Text(numberLabel);
+            row.RelativeItem().ShowOnce().Text(poin.TeksPoin ?? string.Empty).Justify();
         });
 
-        // Panggil fungsi ini lagi untuk anak-anak dari poin saat ini
-        // dengan MENAIKKAN KEDALAMAN (depth + 1). Ini adalah bagian kuncinya.
-        RenderHierarchicalPoin(column, allPoinForSubBab, poin.Id, depth + 1, indent + 20f);
+        RenderHierarchicalPoin(column, allPoinForSubBab, poin.Id, depth + 1, indent + 35f);
     }
 }
 
