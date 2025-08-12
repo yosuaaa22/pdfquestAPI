@@ -258,8 +258,9 @@ namespace pdfquestAPI.Documents
             var titleStyle = TextStyle.Default.FontSize(12).Bold();
             var bodyStyle = TextStyle.Default.FontSize(10);
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
+         
 
-            column.Item().PaddingBottom(10).Text("II. KETENTUAN UMUM").Style(titleStyle);
+            column.Item().PaddingBottom(10).PaddingTop(10).Text("II. KETENTUAN UMUM").Style(titleStyle);
 
             ComposeProvisionSection(column, "1.", "KERJA SAMA", new[]
             {
@@ -335,7 +336,7 @@ namespace pdfquestAPI.Documents
             var bodyStyle = TextStyle.Default.FontSize(10);
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
 
-            // Judul section - tidak perlu diubah
+            // Judul section 
             column.Item().ShowOnce().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text(sectionNumber).Style(bodyStyle);
@@ -495,33 +496,39 @@ namespace pdfquestAPI.Documents
                                 {
                                     subSubList.Spacing(5);
 
-                                    // MODIFIKASI: Teks pembuka sub-list dibuat justified
+                                    // MODIFIKASI: 
                                     subSubList.Item().Text(text =>
                                     {
                                         text.Justify();
                                         text.Span("Perawatan dan/atau pengobatan karena keikutsertaan dalam aktivitas atau olahraga berbahaya yaitu:").Style(bodyStyle);
                                     });
 
-                                    subSubList.Item().PaddingLeft(15).Column(numberedSubList =>
+                                    subSubList.Item().PaddingLeft(3).Column(numberedSubList =>
                                     {
                                         numberedSubList.Spacing(2);
                                         // MODIFIKASI: Semua item di sub-list dibuat justified
-                                        string[] dangerousSports = {
-                                            "1) Mendaki gunung, panjat tebing, panjat gedung;",
-                                            "2) Bungee jumping;",
-                                            "3) Arung jeram;",
-                                            "4) Semua aktifitas terbang di udara (terjun payung, terbang layang, sky diving, ultrakite dan lain-lain);",
-                                            "5) Semua aktifitas menyelam yang menggunakan alat bantu pernapasan (diving dan lain-lain);",
-                                            "6) semua aktifitas lomba kecepatan dengan kendaraan mesin (balap motor, mobil, perahu dan lain-lain);",
-                                            "7) semua aktifitas olahraga yang bersifat profesional."
+                                       string[] dangerousSports = {
+                                            "Mendaki gunung, panjat tebing, panjat gedung;",
+                                            "Bungee jumping;",
+                                            "Arung jeram;",
+                                            "Semua aktifitas terbang di udara (terjun payung, terbang layang, sky diving, ultrakite dan lain-lain);",
+                                            "Semua aktifitas menyelam yang menggunakan alat bantu pernapasan (diving dan lain-lain);",
+                                            "semua aktifitas lomba kecepatan dengan kendaraan mesin (balap motor, mobil, perahu dan lain-lain);",
+                                            "semua aktifitas olahraga yang bersifat profesional."
                                         };
 
-                                        foreach (var sport in dangerousSports)
+                                        foreach (var (sport, index) in dangerousSports.Select((value, i) => (value, i)))
                                         {
-                                            numberedSubList.Item().Text(text =>
-                                            {
-                                                text.Justify();
-                                                text.Span(sport).Style(bodyStyle);
+                                           
+                                            numberedSubList.Item().Row(row =>
+                                            {                  
+                                                row.Spacing(5);   
+                                                row.ConstantItem(10).AlignTop().Text($"{index + 1})").Style(bodyStyle);
+                                                row.RelativeItem().Text(text =>
+                                                {
+                                                    text.Justify();
+                                                    text.Span(sport).Style(bodyStyle);
+                                                });
                                             });
                                         }
                                     });
@@ -564,13 +571,13 @@ namespace pdfquestAPI.Documents
                 list.Spacing(5);
                 list.Item().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("6.1").Style(bodyStyle);
+                    row.ConstantItem(35).ShowOnce().AlignTop().Text("6.1").Style(bodyStyle);
                     row.RelativeItem().Column(subList =>
                     {
                         subList.Spacing(5);
 
                         // Teks pembuka (sudah justified, tidak ada perubahan)
-                        subList.Item().Text(text =>
+                        subList.Item().ShowOnce().Text(text =>
                         {
                             text.Justify();
                             text.Span("Dalam hal Pihak Kedua melakukan hal-hal sebagai berikut:").Style(bodyStyle);
@@ -585,7 +592,7 @@ namespace pdfquestAPI.Documents
                         };
 
                         // MODIFIKASI: Daftar item dibuat justified
-                        subList.Item().PaddingLeft(4).Column(wanprestasiList =>
+                        subList.Item().ShowOnce().PaddingLeft(4).Column(wanprestasiList =>
                         {
                             wanprestasiList.Spacing(5);
                             for (int i = 0; i < wanprestasiItems.Length; i++)
@@ -604,7 +611,7 @@ namespace pdfquestAPI.Documents
                         });
 
                         // Teks penutup (sudah justified, tidak ada perubahan)
-                        subList.Item().Text(text =>
+                        subList.Item().ShowOnce().Text(text =>
                         {
                             text.Justify();
                             text.Span("maka Pihak Pertama akan memberikan teguran kepada Pihak Kedua untuk melakukan perbaikan atas pelanggaran yang terjadi. Teguran akan diberikan dengan jumlah maksimal sebanyak 3 (tiga) kali dengan tenggang waktu setiap surat teguran selama 14 (empat belas) ").Style(bodyStyle);
@@ -615,9 +622,9 @@ namespace pdfquestAPI.Documents
                 });
 
                 // Klausa 6.2 (sudah justified, tidak ada perubahan)
-                list.Item().Row(row =>
+                list.Item().ShowOnce().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("6.2").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("6.2").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -634,19 +641,19 @@ namespace pdfquestAPI.Documents
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
 
             // PASAL 7 - PENYALAHGUNAAN ATAU PENYIMPANGAN
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).ShowOnce().Row(row =>
             {
-                row.ConstantItem(25).AlignTop().Text("7.").Style(bodyStyle);
+                row.ConstantItem(25).AlignTop().ShowOnce().Text("7.").Style(bodyStyle);
                 row.RelativeItem().Text("PENYALAHGUNAAN ATAU PENYIMPANGAN").Style(boldBodyStyle);
             });
 
-            column.Item().PaddingTop(5).PaddingLeft(25).Column(list =>
+            column.Item().PaddingTop(5).ShowOnce().PaddingLeft(25).Column(list =>
             {
                 list.Spacing(5);
 
                 list.Item().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("7.1").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("7.1").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -663,14 +670,14 @@ namespace pdfquestAPI.Documents
                     "Apabila dalam jangka waktu 14 (empat belas) hari kalender setelah pemberitahuan tertulis tersebut dari Pihak Pertama tidak terdapat sanggahan dari Pihak Kedua, maka Pihak Kedua dianggap setuju atas keputusan Pihak Pertama dan Pihak Pertama berhak untuk tetap menolak dan tidak membayarkan klaim kepada Pihak Kedua, sekaligus dapat melakukan pemutusan kerjasama."
                 };
 
-                list.Item().PaddingLeft(35).Column(subList =>
+                list.Item().PaddingLeft(35).ShowOnce().Column(subList =>
                 {
                     subList.Spacing(5);
                     for (int i = 0; i < fraudHandling.Length; i++)
                     {
                         subList.Item().Row(row =>
                         {
-                            row.ConstantItem(35).AlignTop().Text($"7.1.{i + 1}").Style(bodyStyle);
+                            row.ConstantItem(35).ShowOnce().AlignTop().Text($"7.1.{i + 1}").Style(bodyStyle);
                             row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
@@ -682,23 +689,22 @@ namespace pdfquestAPI.Documents
 
                 list.Item().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("7.2").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("7.2").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
-                        text.Span("Pihak Kedua bertanggung jawab untuk memulihkan kerugian yang diderita oleh Pihak Pertama, termasuk dalam proses pengembalian Manfaat/Klaim yang sudah dibayarkan Pihak Pertama kepada Pihak Kedua sesuai dengan prosedur dan tata cara yang ditetapkan oleh Pihak Pertama dalam jangka waktu 30 (tiga puluh) ").Style(bodyStyle);
-                        text.Span("hari kalender").Style(boldBodyStyle);
+                        text.Span("Pihak Kedua bertanggung jawab untuk memulihkan kerugian yang diderita oleh Pihak Pertama, termasuk dalam proses pengembalian Manfaat/Klaim yang sudah dibayarkan Pihak Pertama kepada Pihak Kedua sesuai dengan prosedur dan tata cara yang ditetapkan oleh Pihak Pertama dalam jangka waktu 30 (tiga puluh) hari kalender").Style(bodyStyle);
                         text.Span(" sejak surat pemberitahuan tertulis disampaikan oleh Pihak Pertama kepada Pihak Kedua.").Style(bodyStyle);
                     });
                 });
 
                 list.Item().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("7.3").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("7.3").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
-                        text.Span("Apabila dalam jangka waktu tersebut Pihak Kedua belum juga mengembalikan Manfaat/Klaim tersebut, maka Pihak Kedua dianggap telah melanggar Pihak Pertama dan Pihak Pertama berhak untuk memutuskan kerjasama secara sepihak dan mengajukan tuntutan hukum sekaligus untuk melakukan penagihan.")
+                        text.Span("Apabila dalam jangka waktu tersebut Pihak Kedua belum juga mengembalikan Manfaat klaim dimaksud, maka Pihak Kedua dianggap berhutang kepada Pihak Pertama dan Pihak Pertama berhak untuk menagihkan dengan atau tanpa disertai dengan pengajuan tuntutan hukum sekaligus dapat melakukan pemutusan kerjasama.")
                             .Style(bodyStyle);
                     });
                 });
@@ -712,9 +718,9 @@ namespace pdfquestAPI.Documents
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
 
             // BAGIAN 8 - GANTI RUGI
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).ShowOnce().Row(row =>
             {
-                row.ConstantItem(25).AlignTop().Text("8.").Style(bodyStyle);
+                row.ConstantItem(25).AlignTop().ShowOnce().Text("8.").Style(bodyStyle);
                 row.RelativeItem().Text("GANTI RUGI").Style(boldBodyStyle);
             });
 
@@ -725,7 +731,7 @@ namespace pdfquestAPI.Documents
                 // PASAL 8.1
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("8.1").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("8.1").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -735,7 +741,7 @@ namespace pdfquestAPI.Documents
                 });
 
                 // SUBPASAL 8.1.x
-                list.Item().PaddingLeft(25).Column(subList =>
+                list.Item().PaddingLeft(25).ShowOnce().Column(subList =>
                 {
                     subList.Spacing(5);
                     string[] consequences =
@@ -745,13 +751,13 @@ namespace pdfquestAPI.Documents
                     };
                     for (int i = 0; i < consequences.Length; i++)
                     {
-                        subList.Item().PaddingLeft(35).Row(row =>
+                        subList.Item().PaddingLeft(35).ShowOnce().Row(row =>
                         {
                             row.ConstantItem(35).Text($"8.1.{i + 1}").Style(bodyStyle);
                             row.RelativeItem().Text(consequences[i]).Style(bodyStyle);
                         });
                     }
-                    subList.Item().PaddingLeft(35).Text(text =>
+                    subList.Item().PaddingLeft(35).ShowOnce().Text(text =>
                     {
                         text.Justify();
                         text.Span("maka Pihak Kedua berjanji untuk melepaskan, membebaskan, dan mengganti kerugian Pihak Pertama atas setiap kerugian yang diderita oleh Pihak Pertama termasuk namun tidak terbatas pada klaim, tuntutan, atau ganti rugi yang diajukan oleh Peserta atau pihak ketiga mana pun serta biaya hukum yang timbul sehubungan dengan tindakan pelanggaran, kelalaian, kesalahan, atau malpraktik yang dilakukan oleh Pihak Kedua.")
@@ -768,20 +774,20 @@ namespace pdfquestAPI.Documents
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
 
             // BAGIAN 9 - PERNYATAAN DAN JAMINAN
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).ShowOnce().Row(row =>
             {
-                row.ConstantItem(25).AlignTop().Text("9.").Style(bodyStyle);
+                row.ConstantItem(25).AlignTop().ShowOnce().Text("9.").Style(bodyStyle);
                 row.RelativeItem().Text("PERNYATAAN DAN JAMINAN").Style(boldBodyStyle);
             });
 
-            column.Item().PaddingTop(5).Column(list =>
+            column.Item().PaddingTop(5).ShowOnce().Column(list =>
             {
                 list.Spacing(5);
 
                 // Klausa 9.1 (sudah justified, tidak perlu diubah)
-                list.Item().PaddingLeft(25).Row(row =>
+                list.Item().PaddingLeft(25).ShowOnce().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("9.1").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("9.1").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -803,14 +809,14 @@ namespace pdfquestAPI.Documents
                 };
 
                 // MODIFIKASI: Teks di dalam loop dibuat justified
-                list.Item().PaddingLeft(25).Column(subList =>
+                list.Item().PaddingLeft(25).ShowOnce().Column(subList =>
                 {
                     subList.Spacing(5);
                     for (int i = 0; i < commonWarranties.Length; i++)
                     {
-                        subList.Item().PaddingLeft(35).Row(row =>
+                        subList.Item().PaddingLeft(35).ShowOnce().Row(row =>
                         {
-                            row.ConstantItem(35).AlignTop().Text($"9.1.{i + 1}").Style(bodyStyle);
+                            row.ConstantItem(35).AlignTop().ShowOnce().Text($"9.1.{i + 1}").Style(bodyStyle);
                             row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
@@ -821,9 +827,9 @@ namespace pdfquestAPI.Documents
                 });
 
                 // Klausa 9.2 (sudah justified, tidak perlu diubah)
-                list.Item().PaddingLeft(25).Row(row =>
+                list.Item().PaddingLeft(25).ShowOnce().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("9.2").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("9.2").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -839,14 +845,14 @@ namespace pdfquestAPI.Documents
                 };
 
                 // MODIFIKASI: Teks di dalam loop dibuat justified
-                list.Item().PaddingLeft(25).Column(subList =>
+                list.Item().PaddingLeft(25).ShowOnce().Column(subList =>
                 {
                     subList.Spacing(5);
                     for (int i = 0; i < secondPartyWarranties.Length; i++)
                     {
                         subList.Item().PaddingLeft(35).Row(row =>
                         {
-                            row.ConstantItem(35).AlignTop().Text($"9.2.{i + 1}").Style(bodyStyle);
+                            row.ConstantItem(35).AlignTop().ShowOnce().Text($"9.2.{i + 1}").Style(bodyStyle);
                             row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
@@ -857,9 +863,9 @@ namespace pdfquestAPI.Documents
                 });
 
                 // MODIFIKASI: Klausa 9.3 dibuat justified
-                list.Item().PaddingLeft(25).Row(row =>
+                list.Item().PaddingLeft(25).ShowOnce().ShowOnce().Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("9.3").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("9.3").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -870,7 +876,7 @@ namespace pdfquestAPI.Documents
                 // MODIFIKASI: Klausa 9.4 dibuat justified
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("9.4").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("9.4").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -889,7 +895,7 @@ namespace pdfquestAPI.Documents
             // BAGIAN 10 - KEADAAN KAHAR (FORCE MAJEURE)
             column.Item().PaddingTop(10).Row(row =>
             {
-                row.ConstantItem(25).AlignTop().Text("10.").Style(bodyStyle);
+                row.ConstantItem(25).AlignTop().ShowOnce().Text("10.").Style(bodyStyle);
                 row.RelativeItem().Text("KEADAAN KAHAR (FORCE MAJEURE)").Style(boldBodyStyle);
             });
 
@@ -899,7 +905,7 @@ namespace pdfquestAPI.Documents
 
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("10.1").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("10.1").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -919,7 +925,7 @@ namespace pdfquestAPI.Documents
                     subList.Spacing(5);
                     for (int i = 0; i < forceMajeureItems.Length; i++)
                     {
-                        subList.Item().PaddingLeft(35).Row(row =>
+                        subList.Item().PaddingLeft(35).ShowOnce().Row(row =>
                         {
                             row.ConstantItem(35).AlignTop().ShowOnce().Text($"10.1.{i + 1}").Style(bodyStyle);
                             row.RelativeItem().Text(text =>
@@ -933,7 +939,7 @@ namespace pdfquestAPI.Documents
 
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("10.2").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("10.2").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -943,7 +949,7 @@ namespace pdfquestAPI.Documents
 
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("10.3").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("10.3").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -953,7 +959,7 @@ namespace pdfquestAPI.Documents
 
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text("10.4").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text("10.4").Style(bodyStyle);
                     row.RelativeItem().Text(text =>
                     {
                         text.Justify();
@@ -974,7 +980,7 @@ namespace pdfquestAPI.Documents
             string sectionNumber = $"{_chapterNumber}";
 
             // BAGIAN 11 - KERAHASIAAN
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).ShowOnce().Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text(sectionNumber).Style(bodyStyle);
                 row.RelativeItem().Text("KERAHASIAAN").Style(boldBodyStyle);
@@ -986,7 +992,7 @@ namespace pdfquestAPI.Documents
 
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.1").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text($"{sectionNumber}.1").Style(bodyStyle);
 
                     row.RelativeItem().Text(text =>
                     {
@@ -996,7 +1002,7 @@ namespace pdfquestAPI.Documents
                 });
 
                 // Sub-list untuk definisi (sudah menggunakan justifikasi, tidak diubah)
-                list.Item().PaddingLeft(60).Text(text =>
+                list.Item().PaddingLeft(60).ShowOnce().Text(text =>
                 {
                     text.Justify();
                     text.Span(" 'Informasi Rahasia' ").Style(boldBodyStyle);
@@ -1011,14 +1017,14 @@ namespace pdfquestAPI.Documents
                 };
 
                 string[] romanNumerals = { "i", "ii", "iii", };
-                list.Item().PaddingLeft(25).Column(subList =>
+                list.Item().PaddingLeft(25).ShowOnce().Column(subList =>
                 {
                     subList.Spacing(5);
                     for (int i = 0; i < confidentialInfoItems.Length; i++)
                     {
                         subList.Item().PaddingLeft(35).Row(row =>
                         {
-                            row.ConstantItem(35).AlignTop().Text($"{romanNumerals[i]}.").Style(bodyStyle);
+                            row.ConstantItem(25).AlignTop().ShowOnce().Text($"{romanNumerals[i]}.").Style(bodyStyle);
 
                             row.RelativeItem().Text(text =>
                             {
@@ -1030,24 +1036,24 @@ namespace pdfquestAPI.Documents
                 });
 
 
-                list.Item().PaddingLeft(60).Text(text =>
+                list.Item().PaddingLeft(60).ShowOnce().Text(text =>
                 {
                     text.Justify();
                     text.Span("dimana Pihak Penerima mungkin dari waktu ke waktu menerima atau mendapatkan (secara lisan atau secara tertulis atau dalam bentuk elektronik) dari Pihak Pengungkap sebagai hasil dari negosiasi, penandatanganan atau pelaksanaan kewajiban-kewajibannya berdasarkan Perjanjian ini.").Style(bodyStyle);
                 });
-                list.Item().PaddingLeft(60).Text(text =>
+                list.Item().PaddingLeft(60).ShowOnce().ShowOnce().Text(text =>
                 {
                     text.Justify();
                     text.Span("'Pihak Penerima'").Style(boldBodyStyle);
                     text.Span(" berarti setiap Pihak yang menerima Informasi Rahasia berdasarkan Perjanjian ini.").Style(bodyStyle);
                 });
-                list.Item().PaddingLeft(60).Text(text =>
+                list.Item().PaddingLeft(60).ShowOnce().Text(text =>
                 {
                     text.Justify();
                     text.Span("'Pihak Pengungkap'").Style(boldBodyStyle);
                     text.Span(" berarti setiap Pihak yang memberikan Informasi Rahasia berdasarkan Perjanjian ini.").Style(bodyStyle);
                 });
-                list.Item().PaddingLeft(60).Text(text =>
+                list.Item().PaddingLeft(60).ShowOnce().Text(text =>
                 {
                     text.Justify();
                     text.Span("'Perwakilan'").Style(boldBodyStyle);
@@ -1059,9 +1065,9 @@ namespace pdfquestAPI.Documents
                 // Clause 11.2
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
 
-                    row.RelativeItem().Text(text =>
+                    row.RelativeItem().ShowOnce().Text(text =>
                     {
                         text.Justify();
                         text.Span("Pihak Penerima berjanji kepada Pihak Pengungkap bahwa, dengan tunduk pada ketentuan Pasal 10.4. Perjanjian ini, kecuali persetujuan tertulis dari Pihak Pengungkap telah diperoleh sebelumnya, Pihak Penerima wajib, dan wajib melakukan usaha terbaiknya untuk memastikan bahwa Perwakilannya, menjaga kerahasiaan dan tidak akan karena kegagalan menjalankan kehati-hatian atau karena tindakan atau kelalaian apa pun mengungkapkan kepada siapa pun, atau menggunakan atau mengeksploitasi secara komersial untuk kepentingannya sendiri, setiap Informasi Rahasia dari Pihak Pengungkap.").Style(bodyStyle);
@@ -1071,9 +1077,9 @@ namespace pdfquestAPI.Documents
                 // Clause 11.3 dengan sub-list
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
 
-                    row.RelativeItem().Text(text =>
+                    row.RelativeItem().ShowOnce().Text(text =>
                     {
                         text.Justify();
                         text.Span("Persetujuan yang dirujuk dalam Pasal 11.2 Perjanjian ini tidak akan disyaratkan untuk pengungkapan oleh Pihak Penerima atas setiap Informasi Rahasia:").Style(bodyStyle);
@@ -1097,7 +1103,7 @@ namespace pdfquestAPI.Documents
                     {
                         subList.Item().PaddingLeft(35).Row(row =>
                         {
-                            row.ConstantItem(35).AlignTop().Text($"11.3.{j + 1}").Style(bodyStyle);
+                            row.ConstantItem(35).AlignTop().ShowOnce().Text($"11.3.{j + 1}").Style(bodyStyle);
                             row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
@@ -1110,8 +1116,8 @@ namespace pdfquestAPI.Documents
                 // Clause 11.4 dengan sub-sub-list
                 list.Item().PaddingLeft(25).Row(row =>
                 {
-                    row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
-                    row.RelativeItem().Text(text =>
+                    row.ConstantItem(35).AlignTop().ShowOnce().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
+                    row.RelativeItem().ShowOnce().Text(text =>
                     {
                         text.Justify();
                         text.Span("Jika Pihak Penerima diminta untuk melakukan pengungkapan berdasarkan Pasal 10.3 Perjanjian ini, Pihak Penerima harus:").Style(bodyStyle);
@@ -1125,14 +1131,14 @@ namespace pdfquestAPI.Documents
                     "jika pengungkapan tidak dapat dihindari :"
                 };
 
-                list.Item().PaddingLeft(25).Column(subList =>
+                list.Item().PaddingLeft(25).ShowOnce().Column(subList =>
                 {
                     subList.Spacing(5);
                     for (int j = 0; j < disclosureSteps.Length; j++)
                     {
-                        subList.Item().PaddingLeft(35).Row(row =>
+                        subList.Item().PaddingLeft(35).ShowOnce().Row(row =>
                         {
-                            row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.4.{j + 1}").Style(bodyStyle);
+                            row.ConstantItem(35).AlignTop().ShowOnce().Text($"{sectionNumber}.4.{j + 1}").Style(bodyStyle);
                             row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
@@ -1142,12 +1148,12 @@ namespace pdfquestAPI.Documents
                     }
                 });
 
-                list.Item().PaddingLeft(60).Column(subSubList =>
+                list.Item().PaddingLeft(95).Column(subSubList =>
                 {
                     subSubList.Spacing(5);
                     subSubList.Item().Row(row =>
                     {
-                        row.ConstantItem(35).AlignTop().Text($"i.").Style(bodyStyle);
+                        row.ConstantItem(25).AlignTop().ShowOnce().Text($"i.").Style(bodyStyle);
                         row.RelativeItem().Text(text =>
                         {
                             text.Justify();
@@ -1156,7 +1162,7 @@ namespace pdfquestAPI.Documents
                     });
                     subSubList.Item().Row(row =>
                     {
-                        row.ConstantItem(35).AlignTop().Text($"ii.").Style(bodyStyle);
+                        row.ConstantItem(25).AlignTop().ShowOnce().Text($"ii.").Style(bodyStyle);
                         row.RelativeItem().Text(text =>
                         {
                             text.Justify();
@@ -1179,7 +1185,7 @@ namespace pdfquestAPI.Documents
                 {
                     list.Item().PaddingLeft(25).Row(row =>
                     {
-                        row.ConstantItem(35).AlignTop().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
+                        row.ConstantItem(35).AlignTop().ShowOnce().Text($"{sectionNumber}.{clauseNumber++}").Style(bodyStyle);
                         row.RelativeItem().Text(text =>
                         {
                             text.Justify();
@@ -1197,21 +1203,21 @@ namespace pdfquestAPI.Documents
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
 
             // BAGIAN 12 - DATA PRIBADI
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).ShowOnce().Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("12").Style(bodyStyle);
                 row.RelativeItem().Text("DATA PRIBADI").Style(boldBodyStyle);
             });
 
-            column.Item().PaddingTop(5).Column(list =>
+            column.Item().PaddingTop(5).ShowOnce().Column(list =>
             {
                 list.Spacing(5);
 
                 void AddItem(string number, Action<TextDescriptor> contentBuilder)
                 {
-                    list.Item().PaddingLeft(25).Row(row =>
+                    list.Item().PaddingLeft(25).ShowOnce().Row(row =>
                     {
-                        row.ConstantItem(35).ShowOnce().AlignTop().Text(number).Style(bodyStyle);
+                        row.ConstantItem(35).ShowOnce().AlignTop().ShowOnce().Text(number).Style(bodyStyle);
                         row.RelativeItem().Text(contentBuilder);
                     });
                 }
@@ -1234,21 +1240,27 @@ namespace pdfquestAPI.Documents
                     "Melakukan pengawasan terhadap setiap Perwakilan dan/atau pihak ketiga lain yang terlibat dalam pemrosesan Data Pribadi di bawah kendali masing-masing Pihak dalam pelaksanaan Perjanjian.",
                     "Menjaga kerahasiaan Data Pribadi atas segala bentuk komunikasi antara Pihak Kedua dan Pihak Pertama dalam media apa pun.",
                     "Dalam hal salah satu Para Pihak hendak melibatkan pihak ketiga dalam pemrosesan Data Pribadi, maka Pihak tersebut wajib terlebih dahulu mendapatkan persetujuan tertulis dari Pihak lainnya, dan memastikan bahwa asuradur dan/atau pihak ketiga tersebut akan melakukan pemrosesan Data Pribadi berdasarkan perintah masing-masing Pihak.",
-                    "Terdapat permintaan dari salah satu Pihak untuk mengembalikan, menghancurkan dan/atau menghapus seluruh dokumen, catatan, dan materi lainnya yang mengandung Data Pribadi yang berada di bawah kendali salah satu Pihak, maka pengembalian, penghancuran, dan/atau penghapusan dokumen wajib dilakukan dalam jangka waktu 10 (sepuluh) Hari Kerja sejak permintaan diterima. Pihak yang melakukan pengembalian, penghancuran, dan/atau penghapusan wajib memberikan kepada Pihak lainnya suatu dokumentasi yang menunjukkan bahwa pengembalian, penghancuran, dan/atau penghapusan telah dilakukan;",
+                    "Jika Terdapat permintaan dari salah satu Pihak untuk mengembalikan, menghancurkan dan/atau menghapus seluruh dokumen, catatan, dan materi lainnya yang mengandung Data Pribadi yang berada di bawah kendali salah satu Pihak, maka pengembalian, penghancuran, dan/atau penghapusan dokumen wajib dilakukan dalam jangka waktu 10 (sepuluh) Hari Kerja sejak permintaan diterima. Pihak yang melakukan pengembalian, penghancuran, dan/atau penghapusan wajib memberikan kepada Pihak lainnya suatu dokumentasi yang menunjukkan bahwa pengembalian, penghancuran, dan/atau penghapusan telah dilakukan;",
                     "Mengembalikan, menghancurkan, dan/atau menghapus seluruh dokumen, catatan, dan materi lainnya yang mengandung Data Pribadi yang berada di bawah kendali salah satu Pihak sesuai dengan ketentuan berikut:",
+                    null, 
                     "Menyampaikan pemberitahuan tertulis kepada Pihak lainnya, sesegera mungkin akan tetapi tidak lebih dari 48 (empat puluh delapan) jam setelah terjadinya suatu tindakan pelanggaran Data Pribadi oleh salah satu Pihak, baik yang disengaja maupun tidak disengaja, termasuk akses, pengolahan, perusakan, penghapusan, penghilangan, perubahan, pengungkapan atau penggunaan Data Pribadi tanpa izin yang dilakukan atas nama Pihak tersebut dan/atau Perwakilannya, atau tindakan mencurigakan yang dilakukan dalam pengelolaan Data Pribadi (termasuk tapi tidak terbatas pada akses rutin yang tidak biasa pada Data Pribadi oleh pegawai atau karyawan dari masing-masing Pihak) atau pelanggaran lainnya dari kewajiban perlindungan Data Pribadi sesuai dengan Perjanjian ini atau penegakan hukum terhadapnya sesuai dengan peraturan perundang-undangan mengenai perlindungan Data Pribadi."
                 };
 
                 list.Item().PaddingLeft(25).Column(subList =>
                 {
                     subList.Spacing(5);
+
+                    // 1. Buat variabel penghitung terpisah, dimulai dari 1
+                    int itemCounter = 1; 
+
                     for (int i = 0; i < personalDataObligations.Length; i++)
                     {
                         if (personalDataObligations[i] != null)
                         {
                             subList.Item().PaddingLeft(35).Row(row =>
                             {
-                                row.ConstantItem(35).ShowOnce().Text($"12.2.{i + 1}").Style(bodyStyle);
+                                // 2. Gunakan 'itemCounter++' untuk penomoran
+                                row.ConstantItem(35).ShowOnce().Text($"12.2.{itemCounter++}").Style(bodyStyle);
                                 row.RelativeItem().Text(text =>
                                 {
                                     text.Justify();
@@ -1258,12 +1270,13 @@ namespace pdfquestAPI.Documents
                         }
                         else
                         {
+                          
                             subList.Item().PaddingLeft(35).Column(subSubList =>
                             {
                                 subSubList.Spacing(5);
                                 subSubList.Item().PaddingLeft(35).Row(row =>
                                 {
-                                    row.ConstantItem(35).ShowOnce().Text("i.").Style(bodyStyle);
+                                    row.ConstantItem(25).ShowOnce().Text("i.").Style(bodyStyle);
                                     row.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
@@ -1272,7 +1285,7 @@ namespace pdfquestAPI.Documents
                                 });
                                 subSubList.Item().PaddingLeft(35).Row(row =>
                                 {
-                                    row.ConstantItem(35).ShowOnce().Text("ii.").Style(bodyStyle);
+                                    row.ConstantItem(25).ShowOnce().Text("ii.").Style(bodyStyle);
                                     row.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
@@ -1282,7 +1295,7 @@ namespace pdfquestAPI.Documents
                                 subSubList.Item().PaddingLeft(35).Text(text =>
                                 {
                                     text.Justify();
-                                    text.Span("dan menyediakan dokumentasi kepada Pihak lainnya sebagai bukti bahwa proses tersebut telah dilaksanakan sesuai dengan ketentuan.").Style(bodyStyle);
+                                    text.Span("dan menyediakan keterangan penghancuran atau penghapusan tersebut kepada Pihak lainnya; dan").Style(bodyStyle);
                                 });
                             });
                         }
@@ -1486,8 +1499,7 @@ namespace pdfquestAPI.Documents
 
                 AddItem("14.1", text =>
                 {
-                    text.Justify();
-                    text.Span("Pihak Kedua mengakui dan memahami bahwa Pihak Pertama adalah suatu lembaga jasa keuangan yang berdasarkan ketentuan dan peraturan perundang-undangan yang berlaku wajib menerapkan ketentuan mengenai Customer Due Diligence sebagai bentuk penerapan program Anti Pencucian Uang dan Pencegahan Pendanaan Terorisme dan Pencegahan Proliferasi Senjata Pemusnah Massal. Sehubungan dengan hal tersebut, Pihak Kedua bersedia menyampaikan dan segera melaporkan kepada Pihak Pertama data, informasi, dokumen, serta setiap perubahan data Peserta yang menerima pelayanan kesehatan dari Pihak Kedua. ").Style(bodyStyle);
+                    text.Justify();text.Span("Pihak Kedua mengakui dan memahami bahwa Pihak Pertama adalah suatu lembaga jasa keuangan yang berdasarkan ketentuan dan peraturan perundang-undangan yang berlaku wajib menerapkan ketentuan mengenai Customer Due Diligence sebagai bentuk penerapan program Anti Pencucian Uang dan Pencegahan Pendanaan Terorisme dan Pencegahan Proliferasi Senjata Pemusnah Massal. Sehubungan dengan hal tersebut, Pihak Kedua bersedia menyampaikan dan segera melaporkan kepada Pihak Pertama data, informasi, dokumen, serta setiap perubahan data Peserta yang menerima pelayanan kesehatan dari Pihak Kedua.\n").Style(bodyStyle);
                     text.Span("Untuk menghindari keraguan, ").Style(bodyStyle);
                     text.Span("'Customer Due Diligence'").Style(boldBodyStyle);
                     text.Span(" berarti kegiatan identifikasi, verifikasi, dan pemantauan yang dilakukan oleh Pihak Pertama untuk memastikan transaksi sesuai dengan profil, karakteristik, dan/atau pola transaksi Peserta.").Style(bodyStyle);
@@ -1624,7 +1636,7 @@ namespace pdfquestAPI.Documents
                 row.RelativeItem().Text("HUKUM YANG BERLAKU DAN PENYELESAIAN SENGKETA").Style(boldBodyStyle);
             });
 
-            column.Item().PaddingTop(5).Column(list =>
+            column.Item().PaddingTop(5).ShowOnce().Column(list =>
             {
                 list.Spacing(5);
 
@@ -1672,21 +1684,21 @@ namespace pdfquestAPI.Documents
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
 
             // BAGIAN 18 - LAIN - LAIN
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).ShowOnce().Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("18").Style(bodyStyle);
                 row.RelativeItem().Text("LAIN - LAIN").Style(boldBodyStyle);
             });
 
-            column.Item().PaddingTop(5).Column(list =>
+            column.Item().PaddingTop(5).ShowOnce().Column(list =>
             {
                 list.Spacing(5);
 
                 void AddItem(string number, string content)
                 {
-                    list.Item().PaddingLeft(25).Row(row =>
+                    list.Item().PaddingLeft(25).ShowOnce().Row(row =>
                     {
-                        row.ConstantItem(35).AlignTop().Text(number).Style(bodyStyle);
+                        row.ConstantItem(35).AlignTop().ShowOnce().Text(number).Style(bodyStyle);
                         row.RelativeItem().Text(text =>
                         {
                             text.Justify();
@@ -1727,24 +1739,24 @@ namespace pdfquestAPI.Documents
             var point2Definitions = definitions.Where(d => d.Term1.StartsWith("2.")).ToList();
 
             // Section I. DEFINISI DAN INTERPRETASI
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().ShowOnce().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("I.").Style(boldBodyStyle);
                 row.RelativeItem().Text("DEFINISI DAN INTERPRETASI").Style(titleStyle);
             });
 
             // Section 1. Definisi
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().ShowOnce().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(25).AlignTop().Text("1.").Style(bodyStyle);
                 row.RelativeItem().Text(text =>
                 {
                     text.Justify();
-                    text.Span("Dalam Perjanjian ini, kecuali dalam konteksnya memerlukan pengertian lain, ungkapan-ungkapan dan kata-kata sebagai berikut mempunyai arti sebagaimana disebutkan di bawah ini;").Style(bodyStyle);
+                    text.Span("Dalam Perjanjian ini, kecuali dalam konteksnya memerlukan pengertian lain, ungkapan-ungkapan dan kata-kata sebagai berikut mempunyai arti sebagaimana disebutkan di bawah ini :").Style(bodyStyle);
                 });
             });
 
-            column.Item().PaddingTop(10).PaddingLeft(25).Column(defs =>
+            column.Item().ShowOnce().PaddingTop(10).PaddingLeft(25).Column(defs =>
             {
                 defs.Spacing(10);
                 int itemNumber = 1;
@@ -1763,7 +1775,7 @@ namespace pdfquestAPI.Documents
                                     text.Span("Provider").Style(boldBodyStyle);
                                     text.Span(" adalah sarana/fasilitas pelayanan kesehatan yang bekerja sama dengan Pihak Pertama untuk memberikan pelayanan kesehatan bagi Peserta berdasarkan tingkat pelayanan yang diberikan. Provider terbagi atas:").Style(bodyStyle);
                                 });
-                                subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
+                                subColumn.Item().PaddingTop(5).PaddingLeft(2).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).AlignTop().ShowOnce().Text("1)").Style(bodyStyle);
                                     subRow.RelativeItem().Text(text =>
@@ -1773,9 +1785,9 @@ namespace pdfquestAPI.Documents
                                         text.Span(": sarana pelayanan kesehatan yang memberikan pelayanan kesehatan dasar/umum non spesialistik dan mengutamakan pelayanan promotif dan preventif seperti balai pengobatan, dokter keluarga, klinik dan puskesmas yang bekerjasama dengan Pihak Pertama dengan Pihak Pertama atau sekaligus bekerjasama dengan BPJS Kesehatan; dan").Style(bodyStyle);
                                     });
                                 });
-                                subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
+                                subColumn.Item().PaddingTop(5).PaddingLeft(2).Row(subRow =>
                                 {
-                                    subRow.ConstantItem(20).AlignTop().Text("2)").Style(bodyStyle);
+                                    subRow.ConstantItem(20).AlignTop().ShowOnce().Text("2)").Style(bodyStyle);
                                     subRow.RelativeItem().Text(text =>
                                     {
                                         text.Justify();
@@ -1816,7 +1828,7 @@ namespace pdfquestAPI.Documents
                                     text.Span("Surat Jaminan").Style(boldBodyStyle);
                                     text.Span(" adalah dokumen keabsahan Peserta yang diterbitkan oleh Pihak Kedua sebagai syarat untuk memperoleh pelayanan kesehatan di Pihak Kedua berupa:").Style(bodyStyle);
                                 });
-                                subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
+                                subColumn.Item().PaddingTop(5).PaddingLeft(2).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).ShowOnce().AlignTop().Text("1)").Style(bodyStyle);
                                     subRow.RelativeItem().Text(text =>
@@ -1828,7 +1840,7 @@ namespace pdfquestAPI.Documents
                                         text.Span(" adalah surat konfirmasi resmi luaran sistem aplikasi untuk melakukan validasi dan otorisasi jaminan kesehatan. LOA merupakan korespondensi format yang dikirim untuk mengkonfirmasi penjaminan/penundaan/penolakan jaminan layanan kesehatan dan dicetak untuk dilanjutkan konfirmasi kepada Peserta sebelum dilakukan layanan kesehatan.").Style(bodyStyle);
                                     });
                                 });
-                                subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
+                                subColumn.Item().PaddingTop(5).PaddingLeft(2).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).AlignTop().Text("2)").Style(bodyStyle);
                                     subRow.RelativeItem().Text(text =>
@@ -1841,7 +1853,7 @@ namespace pdfquestAPI.Documents
                                     });
                                 });
 
-                                subColumn.Item().PaddingTop(5).PaddingLeft(15).Row(subRow =>
+                                subColumn.Item().PaddingTop(5).PaddingLeft(2).Row(subRow =>
                                 {
                                     subRow.ConstantItem(20).AlignTop().Text("3)").Style(bodyStyle);
                                     subRow.RelativeItem().Text(text =>
@@ -1849,10 +1861,33 @@ namespace pdfquestAPI.Documents
                                         text.Justify();
                                         text.Span("Surat Eligibilitas Peserta").Style(boldBodyStyle);
                                         text.Span(" atau ").Style(bodyStyle);
-                                        text.Span("SEP").Style(boldBodyStyle);
+                                        text.Span(" SEP").Style(boldBodyStyle);
                                         text.Span("adalah surat keabsahan Pelanggan dan/atau Peserta yang diterbitkan oleh fasilitas kesehatan BPJS Kesehatan sebagai syarat untuk mendapatkan pelayanan kesehatan bagi peserta program Jaminan Kesehatan Nasional.").Style(bodyStyle);
                                     });
                                 });
+                            });
+                        });
+                    }
+                    else if (definition.Term1 == "Hari Kalender")
+                    {
+                        defs.Item().Row(row =>
+                        {
+                            row.ConstantItem(35).AlignTop().ShowOnce().Text($"1.{itemNumber++}").Style(bodyStyle);
+                            row.RelativeItem().Text(text =>
+                            {
+                                text.Justify();
+                                // Mulai dengan istilah definisi yang ditebalkan
+                                text.Span("Hari Kalender").Style(boldBodyStyle);
+                                
+                                // Pecah penjelasannya menjadi tiga bagian untuk format khusus
+                                // Bagian 1: Teks sebelum kata "libur"
+                                text.Span(" adalah setiap hari dalam 1 (satu) tahun sesuai dengan kalender gregorius (berdasarkan kalender masehi) tanpa terkecuali, termasuk hari sabtu, minggu, dan hari ").Style(bodyStyle);
+                                
+                                // Bagian 2: Kata "libur" yang ditebalkan
+                                text.Span("libur").Style(boldBodyStyle);
+                                
+                                // Bagian 3: Teks setelah kata "libur"
+                                text.Span(" nasional yang ditetapkan oleh pemerintah dari waktu ke waktu.").Style(bodyStyle);
                             });
                         });
                     }
@@ -1875,12 +1910,15 @@ namespace pdfquestAPI.Documents
                     {
                         defs.Item().Row(row =>
                         {
-                            row.ConstantItem(35).AlignTop().Text($"1.{itemNumber++}").Style(bodyStyle);
+                            row.ConstantItem(35).AlignTop().ShowOnce().Text($"1.{itemNumber++}").Style(bodyStyle);
                             row.RelativeItem().Text(text =>
                             {
                                 text.Justify();
                                 text.Span($"{definition.Term1}").Style(boldBodyStyle);
                                 text.Span($" {definition.Explanation1}").Style(bodyStyle);
+                                text.Span($"{definition.Term2}").Style(boldBodyStyle);
+                                text.Span($" {definition.Explanation2}").Style(bodyStyle);
+
                             });
                         });
                     }
@@ -1905,7 +1943,7 @@ namespace pdfquestAPI.Documents
                 {
                     defs.Item().Row(row =>
                     {
-                        row.ConstantItem(35).AlignTop().Text($"{definition.Term1}").Style(bodyStyle);
+                        row.ConstantItem(35).ShowOnce().AlignTop().Text($"{definition.Term1}").Style(bodyStyle);
                         row.RelativeItem().Text(text =>
                         {
                             text.Justify();
@@ -1921,7 +1959,7 @@ namespace pdfquestAPI.Documents
             {
                 new DefinitionItem { Term1 = "Alat Kesehatan", Explanation1 = "adalah instrumen, aparatus, mesin dan/atau implan yang tidak mengandung obat yang digunakan untuk mencegah, mendiagnosis, menyembuhkan dan meringankan penyakit, merawat orang sakit, memulihkan kesehatan pada manusia, dan/atau membentuk struktur dan memperbaiki fungsi tubuh." },
                 new DefinitionItem { Term1 = "Aplikasi Kesehatan", Explanation1 = "adalah aplikasi yang disediakan oleh Pihak Pertama, yang dapat diunduh oleh Peserta melalui Playstore dan/atau Appstore yang berisi tentang informasi kesehatan dan layanan asuransi seperti Info Provider, Dokter Online, E-Resep, Info Sehat, Tombol Konfirmasi, Info Benefit/manfaat, E-Claim, dan E-Card." },
-                new DefinitionItem { Term1 = "Aplikasi Pihak Pertama", Explanation1 = "adalah sistem informasi milik Pihak Pertama yang diakses dan digunakan oleh Pihak Kedua dalam memberikan pelayanan kesehatan, mulai dari tahap awal pelayanan hingga tahap penagihan Klaim pelayanan kesehatan." },
+                new DefinitionItem { Term1 = "Aplikasi ", Explanation1 = "Pihak Pertama adalah sistem informasi milik Pihak Pertama yang diakses dan digunakan oleh Pihak Kedua dalam memberikan pelayanan kesehatan, mulai dari tahap awal pelayanan hingga tahap penagihan Klaim pelayanan kesehatan." },
                 new DefinitionItem { Term1 = "Aplikasi Sistem Informasi Manajemen Obat", Explanation1 = "atau", Term2 = "Aplikasi SIMO", Explanation2 = " adalah sistem informasi yang digunakan dalam hal manajemen obat mulai dari tahap awal penyusunan hingga tahap transaksi obat di Provider." },
                 new DefinitionItem { Term1 = "Badan Penyelenggara Jaminan Sosial Kesehatan", Explanation1 = "atau", Term2 = "BPJS Kesehatan", Explanation2 = "adalah Badan hukum yang dibentuk untuk menyelenggarakan program Jaminan Kesehatan Nasional (JKN)." },
                 new DefinitionItem { Term1 = "Bahan dan Alat Kesehatan Habis Pakai", Explanation1 = "atau", Term2 = "BAHP", Explanation2 = "adalah bahan dan Alat Kesehatan yang digunakan oleh Pihak Kedua dalam rangka melakukan diagnosa, pengobatan, dan perawatan yang disediakan oleh Pihak Kedua." },
@@ -1933,14 +1971,14 @@ namespace pdfquestAPI.Documents
                 new DefinitionItem { Term1 = "Formulir Pengajuan Klaim", Explanation1 = "atau", Term2 = "FPK", Explanation2 = "adalah formulir standar Pihak Pertama, yang wajib diisi oleh Pihak Kedua dan disertakan pada saat pengajuan Klaim kepada Pihak Pertama." },
                 new DefinitionItem { Term1 = "Hari Kalender", Explanation1 = "adalah setiap hari dalam 1 (satu) tahun sesuai dengan kalender gregorius (berdasarkan kalender masehi) tanpa terkecuali, termasuk hari sabtu, minggu, dan hari libur nasional yang ditetapkan oleh pemerintah dari waktu ke waktu." },
                 new DefinitionItem { Term1 = "Hari Kerja", Explanation1 = "adalah hari di mana di mana Pihak Pertama beroperasi pada jam kerja yaitu pukul 08.00 - 17.00 waktu setempat, tidak termasuk hari sabtu, minggu, atau hari libur nasional yang ditetapkan oleh pemerintah dari waktu ke waktu." },
-                new DefinitionItem { Term1 = "Hari Rawat", Explanation1 = "adalah perhitungan jumlah Hari Rawat Inap Peserta pada layanan kesehatan milik Pihak Kedua yang dihitung berdasarkan tanggal keluar dikurangi tanggal", Term2 = "masuk", Explanation2 = "dengan ketentuan apabila tanggal keluar sama dengan tanggal masuk, maka dihitung sebagai 1 (satu) Hari Rawat Inap." },
+                new DefinitionItem { Term1 = "Hari Rawat", Explanation1 = "adalah perhitungan jumlah Hari Rawat Inap Peserta pada layanan kesehatan milik Pihak Kedua yang dihitung berdasarkan tanggal keluar dikurangi tanggal", Term2 = " masuk", Explanation2 = "dengan ketentuan apabila tanggal keluar sama dengan tanggal masuk, maka dihitung sebagai 1 (satu) Hari Rawat Inap." },
                 new DefinitionItem { Term1 = "Indonesian-Case Based Group", Explanation1 = "atau", Term2 = "INA-CBG", Explanation2 = "adalah tarif klaim yang ditetapkan oleh BPJS Kesehatan kepada fasilitas kesehatan rujukan tingkat lanjutan atas paket pelayanan kesehatan yang didasarkan kepada pengelompokan diagnosis penyakit dan prosedur." },
                 new DefinitionItem { Term1 = "Kartu Asuransi", Explanation1 = "adalah kartu identitas peserta yang diterbitkan oleh Pihak Pertama sebagai bukti kepesertaan pelayanan kesehatan Pihak Pertama. Kartu Asuransi dapat diterbitkan secara fisik maupun elektronik." },
                 new DefinitionItem { Term1 = "Kasus Gawat Darurat (emergency", Explanation1 = ") adalah suatu kasus/gangguan mendadak yang harus mendapatkan pelayanan kesehatan secepatnya untuk mencegah kematian, keparahan, dan/atau kecacatan sesuai dengan peraturan perundang-undangan." },
                 new DefinitionItem { Term1 = "Klaim", Explanation1 = "adalah uang penggantian yang dibayar oleh Pihak Pertama kepada Pihak Kedua atas pelayanan kesehatan dan/atau obat yang diberikan kepada Peserta." },
                 new DefinitionItem { Term1 = "Manfaat Pelayanan", Explanation1 = "adalah pelayanan kesehatan yang diperjanjikan dalam Perjanjian ini atau ketentuan lain yang berlaku pada Pihak Pertama dengan Pemegang Polis." },
                 new DefinitionItem { Term1 = "Manfaat Top Up", Explanation1 = "adalah penjaminan yang diberikan oleh Pihak Pertama kepada Pihak Kedua atas biaya pelayanan kesehatan Peserta berdasarkan ketentuan Pihak Pertama." },
-                new DefinitionItem { Term1 = "Pelayanan Gawat Darurat", Explanation1 = "atau", Term2 = "emergency", Explanation2 = "adalah pelayanan yang harus diberikan secepatnya pada Kasus Gawat Darurat untuk mengurangi risiko kematian atau cacat." },
+                new DefinitionItem { Term1 = "Pelayanan Gawat Darurat (emergency )", Explanation1 = "adalah pelayanan yang harus diberikan secepatnya pada Kasus Gawat Darurat untuk mengurangi risiko kematian atau cacat." },
                 new DefinitionItem { Term1 = "Pelayanan One Day Care", Explanation1 = "adalah pelayanan atau tindakan pembedahan atau Pelayanan Gawat Darurat yang dilakukan di Instalasi Gawat Darurat Pihak Kedua terhadap kondisi penyakit tertentu yang dilaksanakan oleh tenaga ahli kesehatan dengan atau tanpa anestesi paling sedikit enam jam serta Peserta tanpa harus rawat inap." },
                 new DefinitionItem { Term1 = "Pemegang Polis", Explanation1 = "adalah pihak yang mengikatkan diri berdasarkan perjanjian dengan Pihak Pertama untuk mendapatkan perlindungan atau pengelolaan atas risiko bagi pengguna Produk Asuransi." },
                 new DefinitionItem { Term1 = "Pemeriksaan Penunjang Diagnostik", Explanation1 = "adalah kegiatan pemeriksaan yang dilakukan untuk membantu menegakkan diagnosa sesuai indikasi medis." },
@@ -1971,7 +2009,7 @@ namespace pdfquestAPI.Documents
                 new DefinitionItem { Term1 = "2.7", Explanation1 = "ketentuan apa pun dari undang-undang wajib ditafsirkan sebagai rujukan untuk ketentuan tersebut sebagaimana diubah, dimodifikasi, diberlakukan kembali atau diperpanjang dari waktu ke waktu;" },
                 new DefinitionItem { Term1 = "2.8", Explanation1 = "judul adalah untuk kenyamanan semata dan tidak mempengaruhi penafsiran dari Perjanjian ini;" },
                 new DefinitionItem { Term1 = "2.9", Explanation1 = "kata-kata yang bermakna tunggal mencakup makna jamak dan juga sebaliknya;" },
-                new DefinitionItem { Term1 = "2.10", Explanation1 = "kecuali dinyatakan sebaliknya, kata \"termasuk\" tidak membatasi kata atau istilah sebelumnya dan;" },
+                new DefinitionItem { Term1 = "2.10", Explanation1 = "kecuali dinyatakan sebaliknya, kata \"termasuk\" tidak membatasi kata atau istilah sebelumnya; dan" },
                 new DefinitionItem { Term1 = "2.11", Explanation1 = "ketentuan tidak akan ditafsirkan terhadap salah satu pihak hanya berdasarkan penulis dan ketentaun tersebut"}
             };
         }
