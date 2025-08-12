@@ -52,7 +52,8 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
             var pihakPertama = GetPihakPertamaFromDb(perjanjian.IdPihakPertama);
             var pihakKedua = GetPenyediaLayananFromDb(perjanjian.IdPenyedia);
             var flatKontenList = GetFlatKontenListFromDb(perjanjianId);
-            
+            var lampiranPicData = GetLampiranPicFromDb(perjanjian.IdPenyedia);
+            var lampiranTindakanMedisData = GetLampiranTindakanMedisFromDb(perjanjian.IdPenyedia);
             // Panggil fungsi mapping yang sudah terbukti benar logikanya
             var (ketentuanKhusus, lampiran) = MapToDocumentModel(flatKontenList);
 
@@ -62,7 +63,9 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
                 PihakKedua = pihakKedua,
                 Perjanjian = perjanjian,
                 KetentuanKhusus = ketentuanKhusus,
-                Lampiran = lampiran
+                Lampiran = lampiran,
+                LampiranPic = lampiranPicData,
+                LampiranTindakanMedis = lampiranTindakanMedisData
             };
         }
 
@@ -266,6 +269,56 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
             }
             return penyedia;
         }
+
+        private List<PicModel> GetLampiranPicFromDb(int idPenyedia)
+        {
+            var list = new List<PicModel>();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                var command = new SqlCommand("SELECT JenisPIC, NamaPIC, NomorTelepon, AlamatEmail FROM Lampiran_PIC WHERE IdPenyedia = @idPenyedia", connection);
+                command.Parameters.AddWithValue("@idPenyedia", idPenyedia);
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PicModel
+                        {
+                            JenisPIC = reader["JenisPIC"] as string,
+                            NamaPIC = reader["NamaPIC"] as string,
+                            NomorTelepon = reader["NomorTelepon"] as string,
+                            AlamatEmail = reader["AlamatEmail"] as string
+                        });
+                    }
+                }
+            }
+            return list;
+        }
+        private List<TindakanMedisModel> GetLampiranTindakanMedisFromDb(int idPenyedia)
+{
+    var list = new List<TindakanMedisModel>();
+    using (var connection = new SqlConnection(_connectionString))
+    {
+        var command = new SqlCommand("SELECT JenisTindakanMedis, Tarif, Keterangan FROM Lampiran_TindakanMedis WHERE IdPenyedia = @idPenyedia", connection);
+        command.Parameters.AddWithValue("@idPenyedia", idPenyedia);
+        connection.Open();
+        using (var reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                list.Add(new TindakanMedisModel
+                {
+                    JenisTindakanMedis = reader["JenisTindakanMedis"] as string,
+                    Tarif = reader.IsDBNull(reader.GetOrdinal("Tarif")) ? null : (decimal?)reader["Tarif"],
+                    Keterangan = reader["Keterangan"] as string
+                });
+            }
+        }
+    }
+    return list;
+}
+
+
 
         #endregion
 
