@@ -24,5 +24,8 @@ namespace pdfquestAPI.Data
         // --- PENAMBAHAN BARU ---
         public DbSet<Lampiran_PIC> Lampiran_PIC { get; set; }
         public DbSet<Lampiran_TindakanMedis> Lampiran_TindakanMedis { get; set; }
+
+        public DbSet<RiwayatPerubahan> RiwayatPerubahan { get; set; }
+    public DbSet<PermintaanPersetujuan> PermintaanPersetujuan { get; set; }
     }
 }

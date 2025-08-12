@@ -4,6 +4,9 @@ using System;
 using System.Threading.Tasks;
 using pdfquestAPI.Documents;
 using QuestPDF.Fluent;
+using pdfquestAPI.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace pdfquestAPI.Controllers
 {
@@ -13,42 +16,80 @@ namespace pdfquestAPI.Controllers
     {
         // Kembalikan dependency ke PerjanjianKontenRepository
         private readonly PerjanjianKontenRepository _repository;
-
+        private readonly ApplicationDbContext _context;
         // Kembalikan constructor ke versi aslinya
-        public PerjanjianKustomPdfController(PerjanjianKontenRepository repository)
+        public PerjanjianKustomPdfController(PerjanjianKontenRepository repository, ApplicationDbContext context)
         {
             _repository = repository;
+            _context = context; // Sekarang baris ini valid karena 'context' sudah ada.
         }
 
         // Endpoint untuk generate PDF kustom sudah DIHAPUS dari sini
 
         // Endpoint-endpoint di bawah ini sekarang akan berfungsi kembali
         // karena _repository sudah didefinisikan dengan benar.
-        
+
         [HttpGet("perjanjian/{id}/pdf/kustom")]
-        public IActionResult GenerateKustomPdf(int id)
+        public async Task<IActionResult> GenerateApprovedKustomPdf(int id)
         {
             try
             {
-                // Panggil lagi metode dari repository
-                var perjanjianModel = _repository.GetPerjanjianModelKustom(id);
-                if (perjanjianModel == null)
+                var latestApproved = await _context.PermintaanPersetujuan
+                    .Where(p => p.PerjanjianId == id && p.Status == "Approved")
+                    .OrderByDescending(p => p.TanggalDireview)
+                    .FirstOrDefaultAsync();
+
+                if (latestApproved == null)
                 {
-                    return NotFound($"Data perjanjian kustom dengan ID {id} tidak ditemukan.");
+                    return NotFound($"Tidak ada versi PDF yang disetujui untuk Perjanjian ID {id}. Silakan ajukan persetujuan terlebih dahulu.");
                 }
 
-                var document = new PerjanjianDocument(perjanjianModel);
-                byte[] pdfBytes = document.GeneratePdf();
-                string fileName = $"Perjanjian_Kustom_{id}_{DateTime.Now:yyyyMMdd}.pdf";
-                return File(pdfBytes, "application/pdf", fileName);
+                // --- INI ADALAH KUNCI PERBAIKANNYA ---
+                // Jika TanggalDireview null, kode ini akan memakai TanggalDiajukan
+                // sehingga tidak akan terjadi error.
+                var tanggalUntukNamaFile = latestApproved.TanggalDireview ?? latestApproved.TanggalDiajukan;
+
+                string fileName = $"PKS_KUSTOM_APPROVED_{id}_{tanggalUntukNamaFile:yyyyMMdd}.pdf";
+
+                if (latestApproved.PdfSnapshot == null || latestApproved.PdfSnapshot.Length == 0)
+                {
+                    return StatusCode(500, "Data PDF snapshot pada persetujuan yang ditemukan ternyata kosong (null).");
+                }
+
+                return File(latestApproved.PdfSnapshot, "application/pdf", fileName);
             }
             catch (Exception ex)
             {
-                // Logger bisa ditambahkan di sini
-                return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF kustom: " + ex.Message);
+                return StatusCode(500, "Terjadi kesalahan internal saat mengambil PDF yang disetujui: " + ex.Message);
             }
         }
 
+
+        /// <summary>
+        /// BARU: Endpoint untuk melihat preview PDF dari editan yang sedang berjalan.
+        /// </summary>
+        [HttpGet("perjanjian/{id}/pdf/preview")]
+    public IActionResult GeneratePreviewPdf(int id)
+    {
+        // Logika ini sama persis dengan endpoint /kustom Anda yang lama
+        try
+        {
+            var perjanjianModel = _repository.GetPerjanjianModelKustom(id);
+            if (perjanjianModel == null)
+            {
+                return NotFound($"Data perjanjian kustom dengan ID {id} tidak ditemukan.");
+            }
+
+            var document = new PerjanjianDocument(perjanjianModel);
+            byte[] pdfBytes = document.GeneratePdf();
+            string fileName = $"PREVIEW_Perjanjian_{id}_{DateTime.Now:yyyyMMdd}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "Terjadi kesalahan internal saat membuat preview PDF: " + ex.Message);
+        }
+    }
         [HttpGet("perjanjian/{id}/konten/struktur")]
         public async Task<IActionResult> GetKontenByKeyword(int id, [FromQuery] string kataKunci)
         {

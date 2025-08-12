@@ -1,12 +1,10 @@
-using pdfquestAPI.Data; // Pastikan namespace DbContext Anda benar
+using pdfquestAPI.Data; 
 using pdfquestAPI.Interfaces;
 using pdfquestAPI.Models;
 using System.Threading.Tasks;
 
 namespace pdfquestAPI.Repositories
 {
-    // Ini adalah implementasi dari IUnitOfWork.
-    // Dia yang membuat dan mengelola semua repository.
     public class UnitOfWork : IUnitOfWork
     {
         private readonly ApplicationDbContext _context;
@@ -32,13 +30,11 @@ namespace pdfquestAPI.Repositories
             SubBabKetentuanKhusus = new GenericRepository<SubBabKetentuanKhusus>(_context);
         }
 
-        // Menyimpan semua perubahan yang terlacak ke database
         public async Task<int> CompleteAsync()
         {
             return await _context.SaveChangesAsync();
         }
 
-        // Melepaskan koneksi database
         public void Dispose()
         {
             _context.Dispose();

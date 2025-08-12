@@ -1,4 +1,3 @@
-// Mengimpor namespace yang dibutuhkan dari .NET dan proyek Anda
 using Microsoft.EntityFrameworkCore;
 using pdfquestAPI.Data;
 using pdfquestAPI.Interfaces;
@@ -10,26 +9,33 @@ using QuestPDF.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 // 2. Menambahkan Layanan ke Dependency Injection Container
+
+// a. Konfigurasi Database (DbContext)
+// Pastikan "DefaultConnection" ada di file appsettings.json Anda
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
+// b. Konfigurasi QuestPDF
+QuestPDF.Settings.License = LicenseType.Community;
+
+// c. Mendaftarkan Unit of Work dan Repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<PerjanjianKontenRepository>(); // Repository kustom
 
-// Mendaftarkan semua service aplikasi Anda.
+// d. Mendaftarkan semua Service aplikasi Anda
+builder.Services.AddScoped<IPdfService, PdfService>();
+builder.Services.AddScoped<IChangeLogService, ChangeLogService>();
 builder.Services.AddScoped<IPerjanjianService, PerjanjianService>();
 builder.Services.AddScoped<IJudulIsiService, JudulIsiService>();
 builder.Services.AddScoped<ISubBabKetentuanKhususService, SubBabKetentuanKhususService>();
 builder.Services.AddScoped<IPoinKetentuanKhususService, PoinKetentuanKhususService>();
-builder.Services.AddScoped<IPdfService, PdfService>();
+// Tambahkan service lain di sini jika ada
+// builder.Services.AddScoped<IPenyediaLayananService, PenyediaLayananService>();
+// builder.Services.AddScoped<IPihakPertamaService, PihakPertamaService>();
 
-// =================================================================
-// ---> TAMBAHKAN BARIS INI <---
-// Mendaftarkan repository baru untuk konten perjanjian kustom.
-builder.Services.AddScoped<PerjanjianKontenRepository>();
-// =================================================================
 
-QuestPDF.Settings.License = LicenseType.Community;
-
+// e. Mendaftarkan layanan bawaan ASP.NET Core
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -45,7 +51,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseAuthorization();
+
 app.MapControllers();
 
 // 5. Menjalankan Aplikasi
