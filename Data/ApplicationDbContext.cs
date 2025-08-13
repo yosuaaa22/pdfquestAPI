@@ -21,11 +21,10 @@ namespace pdfquestAPI.Data
         public DbSet<PoinKetentuanKhusus> PoinKetentuanKhusus { get; set; }
         public DbSet<SubBabKetentuanKhusus> SubBabKetentuanKhusus { get; set; }
 
-        // --- PENAMBAHAN BARU ---
         public DbSet<Lampiran_PIC> Lampiran_PIC { get; set; }
         public DbSet<Lampiran_TindakanMedis> Lampiran_TindakanMedis { get; set; }
 
-        public DbSet<RiwayatPerubahan> RiwayatPerubahan { get; set; }
-    public DbSet<PermintaanPersetujuan> PermintaanPersetujuan { get; set; }
+        public DbSet<ChangeRequest> ChangeRequests { get; set; }
+        public DbSet<ChangeRequestItem> ChangeRequestItems { get; set; }
     }
 }

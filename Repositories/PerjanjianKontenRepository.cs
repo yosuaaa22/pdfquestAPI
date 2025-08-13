@@ -5,6 +5,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using pdfquestAPI.Data; // <-- TAMBAHKAN BARIS INI
 using pdfquestAPI.Documents.Models;
 using pdfquestAPI.Models;
 using pdfquestAPI.Interfaces;
@@ -18,15 +20,12 @@ namespace pdfquestAPI.Repositories
     public class PerjanjianKontenRepository
     {
         private readonly string _connectionString;
-        private readonly IChangeLogService _logService;
 
-        public PerjanjianKontenRepository(IConfiguration configuration, IChangeLogService logService) // <-- TAMBAHAN
+        public PerjanjianKontenRepository(ApplicationDbContext context)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
-            _logService = logService; // <-- TAMBAHAN
+            // Mengambil connection string dari DbContext yang sudah terbukti berfungsi
+            _connectionString = context.Database.GetConnectionString();
         }
-
-
         // Kelas internal privat untuk menampung data mentah dari database
         private class PerjanjianKontenData
         {
@@ -368,8 +367,6 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
                 cmd.Parameters.AddWithValue("@levelType", dto.LevelType);
                 cmd.Parameters.AddWithValue("@konten", dto.Konten);
                 await cmd.ExecuteNonQueryAsync();
-                string pengguna = "admin_sementara"; // Ganti dengan user yang sedang login
-                await _logService.LogAsync(dto.IdPerjanjian, pengguna, "CREATE", $"Menambahkan konten baru: '{dto.Konten}'");
             }
         }
 
@@ -394,8 +391,6 @@ public PerjanjianDocumentModel GetPerjanjianModelKustom(int perjanjianId)
                 var cmd = new SqlCommand("sp_HapusKontenDanAnaknya", conn) { CommandType = CommandType.StoredProcedure };
                 cmd.Parameters.AddWithValue("@id_konten_dihapus", kontenId);
                 await cmd.ExecuteNonQueryAsync();
-                string pengguna = "admin_sementara";
-                await _logService.LogAsync(perjanjianId, pengguna, "DELETE", $"Menghapus konten (ID: {kontenId}) dan turunannya.");
     
             }
         }

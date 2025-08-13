@@ -28,68 +28,34 @@ namespace pdfquestAPI.Controllers
 
         // Endpoint-endpoint di bawah ini sekarang akan berfungsi kembali
         // karena _repository sudah didefinisikan dengan benar.
-
-        [HttpGet("perjanjian/{id}/pdf/kustom")]
-        public async Task<IActionResult> GenerateApprovedKustomPdf(int id)
+        /// <summary>
+        /// Menghasilkan PDF dari data perjanjian terkini yang telah disetujui dan diubah.
+        /// </summary>
+        [HttpGet("perjanjian/{id}/pdf/final")] // Ganti nama endpoint menjadi 'final' atau 'approved'
+        public IActionResult GenerateFinalPerjanjianPdf(int id)
         {
             try
             {
-                var latestApproved = await _context.PermintaanPersetujuan
-                    .Where(p => p.PerjanjianId == id && p.Status == "Approved")
-                    .OrderByDescending(p => p.TanggalDireview)
-                    .FirstOrDefaultAsync();
-
-                if (latestApproved == null)
+                // Logika ini sekarang sudah BENAR, karena mengambil data terkini dari Perjanjian_Konten
+                // yang telah diubah oleh ChangeRequestController.
+                var perjanjianModel = _repository.GetPerjanjianModelKustom(id);
+                if (perjanjianModel == null)
                 {
-                    return NotFound($"Tidak ada versi PDF yang disetujui untuk Perjanjian ID {id}. Silakan ajukan persetujuan terlebih dahulu.");
+                    return NotFound($"Data untuk membangun PDF perjanjian ID {id} tidak ditemukan.");
                 }
 
-                // --- INI ADALAH KUNCI PERBAIKANNYA ---
-                // Jika TanggalDireview null, kode ini akan memakai TanggalDiajukan
-                // sehingga tidak akan terjadi error.
-                var tanggalUntukNamaFile = latestApproved.TanggalDireview ?? latestApproved.TanggalDiajukan;
-
-                string fileName = $"PKS_KUSTOM_APPROVED_{id}_{tanggalUntukNamaFile:yyyyMMdd}.pdf";
-
-                if (latestApproved.PdfSnapshot == null || latestApproved.PdfSnapshot.Length == 0)
-                {
-                    return StatusCode(500, "Data PDF snapshot pada persetujuan yang ditemukan ternyata kosong (null).");
-                }
-
-                return File(latestApproved.PdfSnapshot, "application/pdf", fileName);
+                var document = new PerjanjianDocument(perjanjianModel);
+                byte[] pdfBytes = document.GeneratePdf();
+                string fileName = $"FINAL_PKS_{id}_{DateTime.Now:yyyyMMdd}.pdf";
+                return File(pdfBytes, "application/pdf", fileName);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Terjadi kesalahan internal saat mengambil PDF yang disetujui: " + ex.Message);
+                return StatusCode(500, "Terjadi kesalahan internal saat membuat PDF final: " + ex.Message);
             }
         }
 
 
-        /// <summary>
-        /// BARU: Endpoint untuk melihat preview PDF dari editan yang sedang berjalan.
-        /// </summary>
-        [HttpGet("perjanjian/{id}/pdf/preview")]
-    public IActionResult GeneratePreviewPdf(int id)
-    {
-        // Logika ini sama persis dengan endpoint /kustom Anda yang lama
-        try
-        {
-            var perjanjianModel = _repository.GetPerjanjianModelKustom(id);
-            if (perjanjianModel == null)
-            {
-                return NotFound($"Data perjanjian kustom dengan ID {id} tidak ditemukan.");
-            }
-
-            var document = new PerjanjianDocument(perjanjianModel);
-            byte[] pdfBytes = document.GeneratePdf();
-            string fileName = $"PREVIEW_Perjanjian_{id}_{DateTime.Now:yyyyMMdd}.pdf";
-            return File(pdfBytes, "application/pdf", fileName);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, "Terjadi kesalahan internal saat membuat preview PDF: " + ex.Message);
-        }
-    }
         [HttpGet("perjanjian/{id}/konten/struktur")]
         public async Task<IActionResult> GetKontenByKeyword(int id, [FromQuery] string kataKunci)
         {
