@@ -1234,7 +1234,7 @@ namespace pdfquestAPI.Documents
                     text.Span("Masing-masing pihak wajib:").Style(bodyStyle);
                 });
 
-                string[] personalDataObligations =
+                string?[] personalDataObligations =
                 {
                     "Memperoleh persetujuan yang sah secara eksplisit dalam bentuk tertulis dari subjek Data Pribadi mengenai pemrosesan Data Pribadi untuk tujuan pelaksanaan Perjanjian, serta wajib menyampaikan tujuan pemrosesan Data Pribadi kepada para subjek Data Pribadi.",
                     "Melakukan pengawasan terhadap setiap Perwakilan dan/atau pihak ketiga lain yang terlibat dalam pemrosesan Data Pribadi di bawah kendali masing-masing Pihak dalam pelaksanaan Perjanjian.",
@@ -2025,70 +2025,81 @@ namespace pdfquestAPI.Documents
         #region Main Content Methods
         void ComposeContent(ColumnDescriptor column)
         {
-
+            // Memulai bagian "KETENTUAN KHUSUS" di halaman baru. Ini tetap diperlukan.
             column.Item().PageBreak();
-    column.Item().AlignLeft().Text("III. KETENTUAN KHUSUS").Bold().FontSize(12);
+            column.Item().AlignLeft().Text("III. KETENTUAN KHUSUS").Bold().FontSize(12);
 
-    // Gunakan LINQ .Select() untuk mendapatkan indeks bab utama (untuk penomoran 1., 2., 3.)
-    foreach (var (bab, babIndex) in _model.KetentuanKhusus.OrderBy(b => b.UrutanTampil).Select((value, i) => (value, i)))
-    {
-        column.Item().PaddingTop(24).Table(table =>
-        {
-            table.ColumnsDefinition(columns =>
+            // Mengurutkan bab untuk memastikan urutan tampil benar
+            var orderedBabs = _model.KetentuanKhusus.OrderBy(b => b.UrutanTampil).ToList();
+            foreach (var (bab, babIndex) in _model.KetentuanKhusus.OrderBy(b => b.UrutanTampil).Select((value, i) => (value, i)))
             {
-                columns.ConstantColumn(120);
-                columns.ConstantColumn(10);
-                columns.RelativeColumn();
-            });
-
-            // Gunakan babIndex untuk penomoran otomatis
-            table.Cell().ShowOnce().AlignTop().Text($"{babIndex + 1}. {bab.JudulTeks}").Bold();
-            table.Cell().ShowOnce().AlignTop().AlignCenter().Text(":");
-
-            table.Cell().Column(contentColumn =>
-            {
-                if (bab.UrutanTampil == 7) RenderRekeningBankFromModel(contentColumn);
-                else if (bab.UrutanTampil == 8) RenderAlamatKorespondensiFromModel(contentColumn);
-                else
+                // Logika PageBreak tetap sama untuk memisahkan halaman
+                if (bab.UrutanTampil == 7)
                 {
-                    // Loop untuk SubBab, gunakan .Select() untuk mendapatkan indeks sub-bab
-                    var orderedSubBabs = bab.SubBab.OrderBy(s => s.UrutanTampil).ToList();
-                    foreach (var (subBab, subBabIndex) in orderedSubBabs.Select((value, i) => (value, i)))
-                    {
-                        if (!string.IsNullOrWhiteSpace(subBab.Konten))
-                        {
-                            // Buat label SubBab secara dinamis (contoh: 1.1, 1.2)
-                            // Hanya tampilkan nomor jika ada lebih dari satu sub-bab atau jika ada poin di dalamnya
-                            var subBabLabel = (orderedSubBabs.Count > 1 || (subBab.Poin != null && subBab.Poin.Any()))
-                                ? $"{babIndex + 1}.{subBabIndex + 1}."
-                                : "";
-
-                            contentColumn.Item().PaddingBottom(8).Row(row =>
-                            {
-                                row.Spacing(5);
-                                if (!string.IsNullOrEmpty(subBabLabel))
-                                {
-                                    row.ConstantItem(30).AlignTop().Text(subBabLabel);
-                                }
-                                row.RelativeItem().Text(subBab.Konten).Justify();
-                            });
-                        }
-
-                        // Panggil fungsi render hierarkis yang baru
-                        if (subBab.Poin != null && subBab.Poin.Any())
-                        {
-                            // Mulai dari parentId null (level teratas), depth 0, dan indent awal
-                            RenderHierarchicalPoin(contentColumn, subBab.Poin, null, 0, 35f);
-                        }
-                    }
+                    column.Item().PageBreak();
                 }
+
+                column.Item().PaddingTop(24).Row(row =>
+                {
+                    row.Spacing(0);
+                    row.ConstantItem(120)
+                        .ShowOnce() // Perintah ini sekarang akan bekerja dengan benar di dalam Row
+                        .AlignTop()
+                        .Text($"{babIndex + 1}. {bab.JudulTeks}")
+                        .Bold();
+                    row.ConstantItem(10)
+                        .ShowOnce() // Perintah ini juga penting
+                        .AlignTop()
+                        .AlignCenter()
+                        .Text(":");
+
+                    row.RelativeItem().Column(contentColumn =>
+                    {
+                        if (bab.UrutanTampil == 7) RenderRekeningBankFromModel(contentColumn);
+                        else if (bab.UrutanTampil == 8) RenderAlamatKorespondensiFromModel(contentColumn);
+                        else
+                        {
+                            if (bab.SubBab != null && bab.SubBab.Any())
+                            {
+                                var orderedSubBabs = bab.SubBab.OrderBy(s => s.UrutanTampil).ToList();
+                                foreach (var (subBab, subBabIndex) in orderedSubBabs.Select((value, i) => (value, i)))
+                                {
+                                    if (!string.IsNullOrWhiteSpace(subBab.Konten))
+                                    {
+                                        var subBabLabel = (orderedSubBabs.Count > 1 || (subBab.Poin != null && subBab.Poin.Any()))
+                                            ? $"{babIndex + 1}.{subBabIndex + 1}."
+                                            : "";
+
+                                        contentColumn.Item().PaddingBottom(8).Row(innerRow =>
+                                        {
+                                            innerRow.Spacing(5);
+                                            if (!string.IsNullOrEmpty(subBabLabel))
+                                            {
+                                                innerRow.ConstantItem(30).AlignTop().Text(subBabLabel);
+                                            }
+                                            innerRow.RelativeItem().Text(subBab.Konten).Justify();
+                                        });
+                                    }
+
+                                    if (subBab.Poin != null && subBab.Poin.Any())
+                                    {
+                                        RenderHierarchicalPoin(contentColumn, subBab.Poin, null, 0, 35f);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            column.Item().PaddingTop(30).Text(text =>
+            {
+                text.Justify();             
+                text.Span("DEMIKIANLAH,").Bold();
+                text.Span(" Para Pihak telah menandatangani Perjanjian ini pada hari dan tanggal yang disebutkan di atas.");
             });
-        });
-    }
 
-            column.Item().PaddingTop(30).Text("DEMIKIANLAH, Para Pihak telah menandatangani Perjanjian ini pada hari dan tanggal yang disebutkan di atas.").Justify();
-
-            column.Item().PaddingTop(50).Table(table =>
+            column.Item().PaddingTop(30).Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
@@ -2100,8 +2111,7 @@ namespace pdfquestAPI.Documents
                 {
                     col.Item().Height(40).AlignBottom().Column(inner =>
                     {
-                        inner.Item().Text("PT ASURANSI JIWA INHEALTH").Bold();
-                        inner.Item().Text("INDONESIA").Bold();
+                        inner.Item().Text("PT ASURANSI JIWA INHEALTH INDONESIA").Bold();
                     });
                     col.Item().Height(80);
                     col.Item().LineHorizontal(1).LineColor(Colors.Black);
@@ -2141,34 +2151,34 @@ namespace pdfquestAPI.Documents
         }
 
         void RenderHierarchicalPoin(ColumnDescriptor column, List<PoinModel> allPoinForSubBab, int? parentId, int depth, float indent)
-{
-    // Mengambil semua anak langsung dari parentId saat ini
-    var children = allPoinForSubBab
-        .Where(p => p.ParentId == parentId)
-        .OrderBy(p => p.UrutanTampil)
-        .ToList();
-
-    if (!children.Any()) return;
-
-    // Loop melalui anak-anak untuk dirender
-    for (int i = 0; i < children.Count; i++)
-    {
-        var poin = children[i];
-        
-        // Hasilkan nomor berdasarkan kedalaman (depth) dan indeks (i)
-        string numberLabel = GetNumberingLabel(depth, i);
-
-        // Render baris
-        column.Item().PaddingLeft(indent).PaddingBottom(4).Row(row =>
         {
-            row.Spacing(5);
-            row.ConstantItem(30).AlignTop().ShowOnce().Text(numberLabel);
-            row.RelativeItem().ShowOnce().Text(poin.TeksPoin ?? string.Empty).Justify();
-        });
+            // Mengambil semua anak langsung dari parentId saat ini
+            var children = allPoinForSubBab
+                .Where(p => p.ParentId == parentId)
+                .OrderBy(p => p.UrutanTampil)
+                .ToList();
 
-        RenderHierarchicalPoin(column, allPoinForSubBab, poin.Id, depth + 1, indent + 35f);
-    }
-}
+            if (!children.Any()) return;
+
+            // Loop melalui anak-anak untuk dirender
+            for (int i = 0; i < children.Count; i++)
+            {
+                var poin = children[i];
+                
+                // Hasilkan nomor berdasarkan kedalaman (depth) dan indeks (i)
+                string numberLabel = GetNumberingLabel(depth, i);
+
+                // Render baris
+                column.Item().PaddingLeft(indent).PaddingBottom(4).Row(row =>
+                {
+                    row.Spacing(5);
+                    row.ConstantItem(30).AlignTop().ShowOnce().Text(numberLabel);
+                    row.RelativeItem().ShowOnce().Text(poin.TeksPoin ?? string.Empty).Justify();
+                });
+
+                RenderHierarchicalPoin(column, allPoinForSubBab, poin.Id, depth + 1, indent + 35f);
+            }
+        }
 
         string GetNumberingLabel(int depth, int index)
         {
@@ -2194,14 +2204,15 @@ namespace pdfquestAPI.Documents
             if (number >= 4000) return number.ToString();
             var romanNumerals = new[]
             {
-        new { Value = 1000, Symbol = "M" }, new { Value = 900, Symbol = "CM" },
-        new { Value = 500, Symbol = "D" }, new { Value = 400, Symbol = "CD" },
-        new { Value = 100, Symbol = "C" }, new { Value = 90, Symbol = "XC" },
-        new { Value = 50, Symbol = "L" }, new { Value = 40, Symbol = "XL" },
-        new { Value = 10, Symbol = "X" }, new { Value = 9, Symbol = "IX" },
-        new { Value = 5, Symbol = "V" }, new { Value = 4, Symbol = "IV" },
-        new { Value = 1, Symbol = "I" }
-    };
+                new { Value = 1000, Symbol = "M" }, new { Value = 900, Symbol = "CM" },
+                new { Value = 500, Symbol = "D" }, new { Value = 400, Symbol = "CD" },
+                new { Value = 100, Symbol = "C" }, new { Value = 90, Symbol = "XC" },
+                new { Value = 50, Symbol = "L" }, new { Value = 40, Symbol = "XL" },
+                new { Value = 10, Symbol = "X" }, new { Value = 9, Symbol = "IX" },
+                new { Value = 5, Symbol = "V" }, new { Value = 4, Symbol = "IV" },
+                new { Value = 1, Symbol = "I" }
+            };
+
             var result = new System.Text.StringBuilder();
             foreach (var numeral in romanNumerals)
             {
@@ -2244,18 +2255,22 @@ namespace pdfquestAPI.Documents
 
         void RenderAlamatKorespondensiFromModel(ColumnDescriptor column)
         {
+        // BENAR:
             column.Item().PaddingBottom(2).Text("Pihak Pertama:");
-            column.Item().PaddingLeft(15).Text("PT Asuransi Jiwa Inhealth Indonesia");
+            column.Item().PaddingLeft(15).Text("PT Asuransi Jiwa Inhealth Indonesia").Bold();
             column.Item().PaddingLeft(15).Text("Jl.Prof.Dr.Satrio Kav.E-IV No.6, Mega Kuningan");
             column.Item().PaddingLeft(15).Text("Jakarta Selatan 12940, Lt.8,9,10.");
             column.Item().PaddingLeft(15).Text("Divisi Pelayanan Kesehatan");
-            column.Item().PaddingLeft(15).Text($"U.p. : {_model.PihakPertama?.NamaPerwakilanPihakPertama ?? "[•]"}");
+            column.Item().PaddingLeft(15).Text(text =>{
+                text.Span("U.p. : ");
+                text.Span(_model.PihakPertama?.NamaPerwakilanPihakPertama ?? "[•]").Bold();
+            });
             column.Item().PaddingLeft(15).Text("Email: " + (_model.PihakPertama?.Email ?? "[•]"));
             column.Item().PaddingTop(10).PaddingBottom(2).Text("Pihak Kedua:");
-            column.Item().PaddingLeft(15).Text(_model.PihakKedua.NamaEntitasCalonProvider ?? "PT [•]");
+            column.Item().PaddingLeft(15).Text(_model.PihakKedua.NamaEntitasCalonProvider ?? "PT [•]").Bold();
             column.Item().PaddingLeft(15).Text(_model.PihakKedua.AlamatPemegangPolis ?? "[Alamat]");
-            column.Item().PaddingLeft(15).Text($"Telp: {_model.PihakKedua.Telepon ?? "[ ]"}");
-            column.Item().PaddingLeft(15).Text($"U.p.: {_model.PihakKedua.NamaPerwakilan ?? "[]"}");
+            column.Item().PaddingLeft(15).Text($"Telp: {_model.PihakKedua.Telepon ?? "[•]"}");
+            column.Item().PaddingLeft(15).Text($"U.p.: {_model.PihakKedua.NamaPerwakilan ?? "[•]"}");
             column.Item().PaddingLeft(15).Text("Email: " + (_model.PihakKedua?.Email ?? "[•]"));
         }
         #endregion
@@ -2286,130 +2301,128 @@ namespace pdfquestAPI.Documents
             }
         }
 
-        // File: pdfquestAPI/Documents/PerjanjianDocument.cs
-
-void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
-{
-    var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
-    
-    for (int i = 0; i < orderedPoin.Count; i++)
-    {
-        var poin = orderedPoin[i];
-        var teks = poin.TeksPoin;
-
-        // --- AWAL PERUBAHAN ---
-        // 1. Ubah pemeriksaan dari StartsWith menjadi Contains
-        if (teks.Contains("[TABLE_SPECIAL]"))
+        void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
         {
-            // 2. Pisahkan awalan (misal: "q.") dari konten tabel
-            int tableTagIndex = teks.IndexOf("[TABLE_SPECIAL]");
-            string prefix = teks.Substring(0, tableTagIndex).Trim();
+            var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
             
-            // Render awalan sebagai teks biasa jika ada
-            if (!string.IsNullOrEmpty(prefix))
+            for (int i = 0; i < orderedPoin.Count; i++)
             {
-                column.Item().PaddingLeft(initialIndent).PaddingBottom(5).Text(prefix);
-            }
+                var poin = orderedPoin[i];
+                var teks = poin.TeksPoin;
 
-            // 3. Kumpulkan semua baris tabel yang berurutan
-            var specialTableRowsContent = new List<string>();
-            int j = i;
-            while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.Contains("[TABLE_SPECIAL]"))
-            {
-                var currentTeks = orderedPoin[j].TeksPoin;
-                var currentContentMatch = Regex.Match(currentTeks, @"\[TABLE_SPECIAL\](.*?)\[/TABLE_SPECIAL\]", RegexOptions.Singleline);
-                if (currentContentMatch.Success)
+                // --- AWAL PERUBAHAN ---
+                // 1. Ubah pemeriksaan dari StartsWith menjadi Contains
+                if (teks.Contains("[TABLE_SPECIAL]"))
                 {
-                    specialTableRowsContent.Add(currentContentMatch.Groups[1].Value.Trim());
+                    // 2. Pisahkan awalan (misal: "q.") dari konten tabel
+                    int tableTagIndex = teks.IndexOf("[TABLE_SPECIAL]");
+                    string prefix = teks.Substring(0, tableTagIndex).Trim();
+                    
+                    // Render awalan sebagai teks biasa jika ada
+                    if (!string.IsNullOrEmpty(prefix))
+                    {
+                        column.Item().PaddingLeft(initialIndent).PaddingBottom(5).Text(prefix);
+                    }
+
+                    // 3. Kumpulkan semua baris tabel yang berurutan
+                    var specialTableRowsContent = new List<string>();
+                    int j = i;
+                    while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.Contains("[TABLE_SPECIAL]"))
+                    {
+                        var currentTeks = orderedPoin[j].TeksPoin;
+                        var currentContentMatch = Regex.Match(currentTeks, @"\[TABLE_SPECIAL\](.*?)\[/TABLE_SPECIAL\]", RegexOptions.Singleline);
+                        if (currentContentMatch.Success)
+                        {
+                            specialTableRowsContent.Add(currentContentMatch.Groups[1].Value.Trim());
+                        }
+                        j++;
+                    }
+
+                    // Render seluruh baris yang terkumpul sebagai satu tabel tunggal
+                    RenderTabelKhususMenyatu(column, specialTableRowsContent);
+
+                    // Pindahkan indeks utama melewati baris-baris yang baru saja dirender
+                    i = j - 1;
                 }
-                j++;
+                // --- AKHIR PERUBAHAN --- (Logika untuk [TABLE] dan teks biasa tetap sama)
+                else if (teks.StartsWith("[TABLE]"))
+                {
+                    RenderTabelBiasa(column, teks);
+                }
+                else
+                {
+                    // Render sebagai teks biasa
+                    float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
+                    column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
+                }
+
+                if (poin.SubPoin != null && poin.SubPoin.Any())
+                {
+                    RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
+                }
             }
-
-            // Render seluruh baris yang terkumpul sebagai satu tabel tunggal
-            RenderTabelKhususMenyatu(column, specialTableRowsContent);
-
-            // Pindahkan indeks utama melewati baris-baris yang baru saja dirender
-            i = j - 1;
         }
-        // --- AKHIR PERUBAHAN --- (Logika untuk [TABLE] dan teks biasa tetap sama)
-        else if (teks.StartsWith("[TABLE]"))
-        {
-            RenderTabelBiasa(column, teks);
-        }
-        else
-        {
-            // Render sebagai teks biasa
-            float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
-            column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
-        }
-
-        if (poin.SubPoin != null && poin.SubPoin.Any())
-        {
-            RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
-        }
-    }
-}
 
         void RenderTabelBiasa(ColumnDescriptor column, string teks)
-{
-    column.Item().PaddingTop(10).PaddingBottom(10).Table(table =>
-    {
-        var headers = teks.Replace("[TABLE]", "").Replace("[/TABLE]", "").Split('|');
+        {
+            column.Item().PaddingTop(10).PaddingBottom(10).Table(table =>
+            {
+                var headers = teks.Replace("[TABLE]", "").Replace("[/TABLE]", "").Split('|');
 
-        table.ColumnsDefinition(columns =>
-        {
-            if (teks.Contains("Jenis Tindakan Medis"))
-            {
-                columns.ConstantColumn(40);
-                columns.RelativeColumn(3);
-                columns.RelativeColumn(2);
-                columns.RelativeColumn(2.5f);
-            }
-            else
-            {
-                foreach (var _ in headers)
+                table.ColumnsDefinition(columns =>
                 {
-                    columns.RelativeColumn();
-                }
-            }
-        });
+                    if (teks.Contains("Jenis Tindakan Medis"))
+                    {
+                        columns.ConstantColumn(40);
+                        columns.RelativeColumn(3);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2.5f);
+                    }
+                    else
+                    {
+                        foreach (var _ in headers)
+                        {
+                            columns.RelativeColumn();
+                        }
+                    }
+                });
 
-        foreach (var header in headers)
-        {
-            // --- PERBAIKAN DI BARIS INI ---
-            // Menggunakan .Background() untuk kontainer sel, bukan .BackgroundColor()
-            table.Cell().Border(1).Background(Colors.Grey.Lighten3).Padding(5).Text(header).Bold();
-        }
+                foreach (var header in headers)
+                {
+                    // --- PERBAIKAN DI BARIS INI ---
+                    // Menggunakan .Background() untuk kontainer sel, bukan .BackgroundColor()
+                    table.Cell().Border(1).Background(Colors.Grey.Lighten3).Padding(5).Text(header).Bold();
+                }
 
-        if (teks.Contains("Jenis PIC"))
-        {
-            if (_model.LampiranPic != null && _model.LampiranPic.Any())
-            {
-                foreach (var pic in _model.LampiranPic)
+                if (teks.Contains("Jenis PIC"))
                 {
-                    table.Cell().Border(1).Padding(5).Text(pic.JenisPIC);
-                    table.Cell().Border(1).Padding(5).Text(pic.NamaPIC);
-                    table.Cell().Border(1).Padding(5).Text(pic.NomorTelepon);
-                    table.Cell().Border(1).Padding(5).Text(pic.AlamatEmail);
+                    if (_model.LampiranPic != null && _model.LampiranPic.Any())
+                    {
+                        foreach (var pic in _model.LampiranPic)
+                        {
+                            table.Cell().Border(1).Padding(5).Text(pic.JenisPIC);
+                            table.Cell().Border(1).Padding(5).Text(pic.NamaPIC);
+                            table.Cell().Border(1).Padding(5).Text(pic.NomorTelepon);
+                            table.Cell().Border(1).Padding(5).Text(pic.AlamatEmail);
+                        }
+                    }
                 }
-            }
-        }
-        else if (teks.Contains("Jenis Tindakan Medis"))
-        {
-            if (_model.LampiranTindakanMedis != null && _model.LampiranTindakanMedis.Any())
-            {
-                int nomor = 1;
-                foreach (var tindakan in _model.LampiranTindakanMedis)
+                else if (teks.Contains("Jenis Tindakan Medis"))
                 {
-                    table.Cell().Border(1).Padding(5).AlignCenter().Text((nomor++).ToString());
-                    table.Cell().Border(1).Padding(5).Text(tindakan.JenisTindakanMedis);
-                    table.Cell().Border(1).Padding(5).AlignRight().Text($"Rp. {tindakan.Tarif?.ToString("N0", new System.Globalization.CultureInfo("id-ID")) ?? "0"}");
-                    table.Cell().Border(1).Padding(5).Text(tindakan.Keterangan);
+                    if (_model.LampiranTindakanMedis != null && _model.LampiranTindakanMedis.Any())
+                    {
+                        int nomor = 1;
+                        foreach (var tindakan in _model.LampiranTindakanMedis)
+                        {
+                            table.Cell().Border(1).Padding(5).AlignCenter().Text((nomor++).ToString());
+                            table.Cell().Border(1).Padding(5).Text(tindakan.JenisTindakanMedis);
+                            table.Cell().Border(1).Padding(5).AlignRight().Text($"Rp. {tindakan.Tarif?.ToString("N0", new System.Globalization.CultureInfo("id-ID")) ?? "0"}");
+                            table.Cell().Border(1).Padding(5).Text(tindakan.Keterangan);
+                        }
+                    }
                 }
-            }
+            });
         }
-    });
-}
 
         void RenderTabelKhususMenyatu(ColumnDescriptor column, List<string> tabelRows)
         {
@@ -2437,30 +2450,48 @@ void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float
                                 .Padding(5)
                                 .Column(col =>
                                 {
-                                    var lines = parts[1].Split(new[] { "\\n" }, StringSplitOptions.RemoveEmptyEntries)
+                                    var lines = parts[1].Split(new[] { "\\n" }, StringSplitOptions.None)
                                                     .Where(l => !string.IsNullOrWhiteSpace(l))
                                                     .ToList();
-
-                                    for (int i = 0; i < lines.Count; i++)
+                                    
+                                    if (lines.Count == 1)
                                     {
-                                        var line = lines[i];
-                                        
-                                        // Membersihkan nomor asli dari setiap baris (misal: "1.", "2.", dst.)
-                                        var lineParts = line.Trim().Split(new[] { '.' }, 2);
-                                        var textContent = (lineParts.Length > 1 && int.TryParse(lineParts[0].Trim(), out _))
-                                                            ? lineParts[1].Trim()
-                                                            : line.Trim();
+                                        col.Item().Text(lines[0].Trim()).Justify();
+                                    }
+                                    else
+                                    {
+                                        int generatedNumberCounter = 1;
 
-                                        col.Item().Row(innerRow =>
+                                        foreach (var line in lines)
                                         {
-                                            innerRow.Spacing(5);
+                                            var match = Regex.Match(line.Trim(), @"^([a-zA-Z0-9]+\.|\d+\)|\([a-zA-Z0-9]+\))\s*");
                                             
-                                            // Membuat nomor urut yang benar menggunakan indeks loop
-                                            innerRow.ConstantItem(20).AlignLeft().ShowOnce().Text($"{i + 1}.");
+                                            string numberLabel;
+                                            string textContent;
 
-                                            // Menampilkan konten teks
-                                            innerRow.RelativeItem().Text(textContent).Justify();
-                                        });
+                                            if (match.Success)
+                                            {
+                                                numberLabel = match.Value;
+                                                textContent = line.Trim().Substring(match.Length);
+                                            }
+                                            else
+                                            {
+                                                numberLabel = $"{generatedNumberCounter}.";
+                                                textContent = line.Trim();
+                                                generatedNumberCounter++;
+                                            }
+                                            
+                                            float indent = (!string.IsNullOrWhiteSpace(numberLabel) && char.IsLetter(numberLabel.Trim(), 0))
+                                                            ? 22f // Indentasi untuk sub-list (a, b, c)
+                                                            : 0;  // Tidak ada indentasi untuk list utama (1, 2, 3)
+
+                                            col.Item().PaddingLeft(indent).PaddingBottom(2).Row(innerRow =>
+                                            {
+                                                innerRow.Spacing(2); // Jarak antara nomor dan teks
+                                                innerRow.ConstantItem(20).AlignLeft().Text(numberLabel);
+                                                innerRow.RelativeItem().Text(textContent).Justify();
+                                            });
+                                        }
                                     }
                                 });
                         });
