@@ -16,9 +16,6 @@ namespace pdfquestAPI.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Menghasilkan dan mengunduh dokumen Perjanjian Kerja Sama dalam format PDF.
-        /// </summary>
         /// <param name="perjanjianId">ID dari perjanjian yang akan dibuatkan PDF-nya.</param>
         /// <returns>File PDF.</returns>
         [HttpGet("perjanjian/{perjanjianId}")]

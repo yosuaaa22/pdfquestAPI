@@ -4,6 +4,7 @@ using pdfquestAPI.Interfaces;
 using pdfquestAPI.Repositories;
 using pdfquestAPI.Services;
 using QuestPDF.Infrastructure;
+using System.Text.Json.Serialization;
 
 // 1. Membuat WebApplicationBuilder
 var builder = WebApplication.CreateBuilder(args);
@@ -25,11 +26,16 @@ builder.Services.AddScoped<PerjanjianKontenRepository>(); // Repository kustom
 
 // d. Mendaftarkan semua Service aplikasi Anda
 builder.Services.AddScoped<IPdfService, PdfService>();
-builder.Services.AddScoped<IChangeLogService, ChangeLogService>();
 builder.Services.AddScoped<IPerjanjianService, PerjanjianService>();
 builder.Services.AddScoped<IJudulIsiService, JudulIsiService>();
 builder.Services.AddScoped<ISubBabKetentuanKhususService, SubBabKetentuanKhususService>();
 builder.Services.AddScoped<IPoinKetentuanKhususService, PoinKetentuanKhususService>();
+builder.Services.AddScoped<PerjanjianKontenRepository>();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    // Baris ini memberitahu API untuk mengonversi string menjadi enum saat menerima JSON
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 // Tambahkan service lain di sini jika ada
 // builder.Services.AddScoped<IPenyediaLayananService, PenyediaLayananService>();
 // builder.Services.AddScoped<IPihakPertamaService, PihakPertamaService>();
