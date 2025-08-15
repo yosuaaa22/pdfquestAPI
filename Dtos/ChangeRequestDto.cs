@@ -20,5 +20,6 @@ namespace pdfquestAPI.Dtos
         public string? LevelType { get; set; }
         public int? ParentId { get; set; }
         public string? AlasanPerubahan { get; set; }
+        public int? UrutanTampilBaru { get; set; }
     }
 }

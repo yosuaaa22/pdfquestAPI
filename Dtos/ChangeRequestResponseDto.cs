@@ -10,9 +10,11 @@ namespace pdfquestAPI.Dtos
         public int Id { get; set; }
         public ChangeActionType ActionType { get; set; }
         public int? TargetKontenId { get; set; }
+        public string? KontenSebelumnya { get; set; }
         public string? KontenBaru { get; set; }
         public string? LevelType { get; set; }
         public int? ParentId { get; set; }
+        public int? UrutanTampilBaru { get; set; }
         public string? AlasanPerubahan { get; set; }
     }
 
@@ -27,6 +29,7 @@ namespace pdfquestAPI.Dtos
         public required string Status { get; set; }
         public DateTime? TanggalDiputuskan { get; set; }
         public string? DiputuskanOleh { get; set; }
+        public int? UrutanTampilBaru { get; set; }
         public List<ChangeRequestItemResponseDto> Items { get; set; } = new();
     }
 }
