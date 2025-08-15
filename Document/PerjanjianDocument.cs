@@ -19,7 +19,7 @@ namespace pdfquestAPI.Documents
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
 
-    
+
         public void Compose(IDocumentContainer container)
         {
             container
@@ -45,7 +45,7 @@ namespace pdfquestAPI.Documents
                 });
         }
 
-        
+
         void ComposeHeader(IContainer container)
         {
             var titleStyle = TextStyle.Default.FontSize(12).Bold();
@@ -252,13 +252,13 @@ namespace pdfquestAPI.Documents
 
             ComposeGeneralProvisions(column);
         }
-        
+
         void ComposeGeneralProvisions(ColumnDescriptor column)
         {
             var titleStyle = TextStyle.Default.FontSize(12).Bold();
             var bodyStyle = TextStyle.Default.FontSize(10);
             var boldBodyStyle = TextStyle.Default.FontSize(10).Bold();
-         
+
 
             column.Item().PaddingBottom(10).PaddingTop(10).Text("II. KETENTUAN UMUM").Style(titleStyle);
 
@@ -322,7 +322,7 @@ namespace pdfquestAPI.Documents
             ComposeMiscellaneous(column);
         }
 
-        
+
         void ComposeProvisionSection(
                 ColumnDescriptor column,
                 string sectionNumber,
@@ -416,7 +416,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeExclusionsSection(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -507,7 +507,7 @@ namespace pdfquestAPI.Documents
                                     {
                                         numberedSubList.Spacing(2);
                                         // MODIFIKASI: Semua item di sub-list dibuat justified
-                                       string[] dangerousSports = {
+                                        string[] dangerousSports = {
                                             "Mendaki gunung, panjat tebing, panjat gedung;",
                                             "Bungee jumping;",
                                             "Arung jeram;",
@@ -519,10 +519,10 @@ namespace pdfquestAPI.Documents
 
                                         foreach (var (sport, index) in dangerousSports.Select((value, i) => (value, i)))
                                         {
-                                           
+
                                             numberedSubList.Item().Row(row =>
-                                            {                  
-                                                row.Spacing(5);   
+                                            {
+                                                row.Spacing(5);
                                                 row.ConstantItem(10).AlignTop().Text($"{index + 1})").Style(bodyStyle);
                                                 row.RelativeItem().Text(text =>
                                                 {
@@ -553,7 +553,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-    
+
         void ComposeWanprestasiSection(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -634,7 +634,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeMisuseAndFraud(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -711,7 +711,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeIndemnity(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -767,7 +767,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeRepresentationsAndWarranties(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -886,7 +886,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeForceMajeure(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -969,7 +969,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeConfidentiality(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1196,7 +1196,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposePersonalData(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1242,7 +1242,7 @@ namespace pdfquestAPI.Documents
                     "Dalam hal salah satu Para Pihak hendak melibatkan pihak ketiga dalam pemrosesan Data Pribadi, maka Pihak tersebut wajib terlebih dahulu mendapatkan persetujuan tertulis dari Pihak lainnya, dan memastikan bahwa asuradur dan/atau pihak ketiga tersebut akan melakukan pemrosesan Data Pribadi berdasarkan perintah masing-masing Pihak.",
                     "Jika Terdapat permintaan dari salah satu Pihak untuk mengembalikan, menghancurkan dan/atau menghapus seluruh dokumen, catatan, dan materi lainnya yang mengandung Data Pribadi yang berada di bawah kendali salah satu Pihak, maka pengembalian, penghancuran, dan/atau penghapusan dokumen wajib dilakukan dalam jangka waktu 10 (sepuluh) Hari Kerja sejak permintaan diterima. Pihak yang melakukan pengembalian, penghancuran, dan/atau penghapusan wajib memberikan kepada Pihak lainnya suatu dokumentasi yang menunjukkan bahwa pengembalian, penghancuran, dan/atau penghapusan telah dilakukan;",
                     "Mengembalikan, menghancurkan, dan/atau menghapus seluruh dokumen, catatan, dan materi lainnya yang mengandung Data Pribadi yang berada di bawah kendali salah satu Pihak sesuai dengan ketentuan berikut:",
-                    null, 
+                    null,
                     "Menyampaikan pemberitahuan tertulis kepada Pihak lainnya, sesegera mungkin akan tetapi tidak lebih dari 48 (empat puluh delapan) jam setelah terjadinya suatu tindakan pelanggaran Data Pribadi oleh salah satu Pihak, baik yang disengaja maupun tidak disengaja, termasuk akses, pengolahan, perusakan, penghapusan, penghilangan, perubahan, pengungkapan atau penggunaan Data Pribadi tanpa izin yang dilakukan atas nama Pihak tersebut dan/atau Perwakilannya, atau tindakan mencurigakan yang dilakukan dalam pengelolaan Data Pribadi (termasuk tapi tidak terbatas pada akses rutin yang tidak biasa pada Data Pribadi oleh pegawai atau karyawan dari masing-masing Pihak) atau pelanggaran lainnya dari kewajiban perlindungan Data Pribadi sesuai dengan Perjanjian ini atau penegakan hukum terhadapnya sesuai dengan peraturan perundang-undangan mengenai perlindungan Data Pribadi."
                 };
 
@@ -1251,7 +1251,7 @@ namespace pdfquestAPI.Documents
                     subList.Spacing(5);
 
                     // 1. Buat variabel penghitung terpisah, dimulai dari 1
-                    int itemCounter = 1; 
+                    int itemCounter = 1;
 
                     for (int i = 0; i < personalDataObligations.Length; i++)
                     {
@@ -1270,7 +1270,7 @@ namespace pdfquestAPI.Documents
                         }
                         else
                         {
-                          
+
                             subList.Item().PaddingLeft(35).Column(subSubList =>
                             {
                                 subSubList.Spacing(5);
@@ -1346,7 +1346,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeAntiBribery(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1472,7 +1472,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeAML(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1499,7 +1499,7 @@ namespace pdfquestAPI.Documents
 
                 AddItem("14.1", text =>
                 {
-                    text.Justify();text.Span("Pihak Kedua mengakui dan memahami bahwa Pihak Pertama adalah suatu lembaga jasa keuangan yang berdasarkan ketentuan dan peraturan perundang-undangan yang berlaku wajib menerapkan ketentuan mengenai Customer Due Diligence sebagai bentuk penerapan program Anti Pencucian Uang dan Pencegahan Pendanaan Terorisme dan Pencegahan Proliferasi Senjata Pemusnah Massal. Sehubungan dengan hal tersebut, Pihak Kedua bersedia menyampaikan dan segera melaporkan kepada Pihak Pertama data, informasi, dokumen, serta setiap perubahan data Peserta yang menerima pelayanan kesehatan dari Pihak Kedua.\n").Style(bodyStyle);
+                    text.Justify(); text.Span("Pihak Kedua mengakui dan memahami bahwa Pihak Pertama adalah suatu lembaga jasa keuangan yang berdasarkan ketentuan dan peraturan perundang-undangan yang berlaku wajib menerapkan ketentuan mengenai Customer Due Diligence sebagai bentuk penerapan program Anti Pencucian Uang dan Pencegahan Pendanaan Terorisme dan Pencegahan Proliferasi Senjata Pemusnah Massal. Sehubungan dengan hal tersebut, Pihak Kedua bersedia menyampaikan dan segera melaporkan kepada Pihak Pertama data, informasi, dokumen, serta setiap perubahan data Peserta yang menerima pelayanan kesehatan dari Pihak Kedua.\n").Style(bodyStyle);
                     text.Span("Untuk menghindari keraguan, ").Style(bodyStyle);
                     text.Span("'Customer Due Diligence'").Style(boldBodyStyle);
                     text.Span(" berarti kegiatan identifikasi, verifikasi, dan pemantauan yang dilakukan oleh Pihak Pertama untuk memastikan transaksi sesuai dengan profil, karakteristik, dan/atau pola transaksi Peserta.").Style(bodyStyle);
@@ -1513,7 +1513,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeTermination(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1583,7 +1583,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeCorrespondence(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1623,7 +1623,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-        
+
         void ComposeGoverningLaw(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1677,7 +1677,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-    
+
         void ComposeMiscellaneous(ColumnDescriptor column)
         {
             var bodyStyle = TextStyle.Default.FontSize(10);
@@ -1724,7 +1724,7 @@ namespace pdfquestAPI.Documents
             });
         }
 
-    
+
         void ComposeAllDefinitions(ColumnDescriptor column)
         {
 
@@ -1878,14 +1878,14 @@ namespace pdfquestAPI.Documents
                                 text.Justify();
                                 // Mulai dengan istilah definisi yang ditebalkan
                                 text.Span("Hari Kalender").Style(boldBodyStyle);
-                                
+
                                 // Pecah penjelasannya menjadi tiga bagian untuk format khusus
                                 // Bagian 1: Teks sebelum kata "libur"
                                 text.Span(" adalah setiap hari dalam 1 (satu) tahun sesuai dengan kalender gregorius (berdasarkan kalender masehi) tanpa terkecuali, termasuk hari sabtu, minggu, dan hari ").Style(bodyStyle);
-                                
+
                                 // Bagian 2: Kata "libur" yang ditebalkan
                                 text.Span("libur").Style(boldBodyStyle);
-                                
+
                                 // Bagian 3: Teks setelah kata "libur"
                                 text.Span(" nasional yang ditetapkan oleh pemerintah dari waktu ke waktu.").Style(bodyStyle);
                             });
@@ -2094,7 +2094,7 @@ namespace pdfquestAPI.Documents
 
             column.Item().PaddingTop(30).Text(text =>
             {
-                text.Justify();             
+                text.Justify();
                 text.Span("DEMIKIANLAH,").Bold();
                 text.Span(" Para Pihak telah menandatangani Perjanjian ini pada hari dan tanggal yang disebutkan di atas.");
             });
@@ -2164,7 +2164,7 @@ namespace pdfquestAPI.Documents
             for (int i = 0; i < children.Count; i++)
             {
                 var poin = children[i];
-                
+
                 // Hasilkan nomor berdasarkan kedalaman (depth) dan indeks (i)
                 string numberLabel = GetNumberingLabel(depth, i);
 
@@ -2255,13 +2255,14 @@ namespace pdfquestAPI.Documents
 
         void RenderAlamatKorespondensiFromModel(ColumnDescriptor column)
         {
-        // BENAR:
+            // BENAR:
             column.Item().PaddingBottom(2).Text("Pihak Pertama:");
             column.Item().PaddingLeft(15).Text("PT Asuransi Jiwa Inhealth Indonesia").Bold();
             column.Item().PaddingLeft(15).Text("Jl.Prof.Dr.Satrio Kav.E-IV No.6, Mega Kuningan");
             column.Item().PaddingLeft(15).Text("Jakarta Selatan 12940, Lt.8,9,10.");
             column.Item().PaddingLeft(15).Text("Divisi Pelayanan Kesehatan");
-            column.Item().PaddingLeft(15).Text(text =>{
+            column.Item().PaddingLeft(15).Text(text =>
+            {
                 text.Span("U.p. : ");
                 text.Span(_model.PihakPertama?.NamaPerwakilanPihakPertama ?? "[•]").Bold();
             });
@@ -2277,54 +2278,170 @@ namespace pdfquestAPI.Documents
 
         #region Appendix Rendering Methods
 
-        void ComposeLampiran(ColumnDescriptor column)
+    // Metode baru yang KHUSUS untuk membuat daftar dengan nomor a, b, c
+        // Metode baru yang KHUSUS untuk membuat daftar dengan nomor a, b, c
+        void RenderListOtomatis(ColumnDescriptor column, List<PoinModel> items)
         {
-            foreach (var lampiran in _model.Lampiran.OrderBy(l => l.UrutanTampil))
+            var orderedItems = items.OrderBy(p => p.UrutanTampil).ToList();
+            
+            // Gunakan loop for untuk mendapatkan indeks (i)
+            for (int i = 0; i < orderedItems.Count; i++)
             {
-                column.Item().PageBreak();
-                column.Item().AlignLeft().Text(lampiran.JudulTeks).Bold().FontSize(14);
-                column.Item().PaddingBottom(20);
-
-                foreach (var subBab in lampiran.SubBab.OrderBy(s => s.UrutanTampil))
+                var poin = orderedItems[i];
+                
+                // Buat label huruf (a, b, c, ...) secara dinamis
+                string numberLabel = $"{(char)('a' + i)}."; 
+                
+                column.Item().PaddingLeft(20f).PaddingBottom(4).Row(row =>
                 {
-                    if (!string.IsNullOrWhiteSpace(subBab.Konten))
-                    {
-                        column.Item().AlignLeft().Text(subBab.Konten).SemiBold();
-                        column.Item().PaddingBottom(10);
-                    }
-
-                    if (subBab.Poin != null && subBab.Poin.Any())
-                    {
-                        RenderPoinDanTabel(column, subBab.Poin, 0);
-                    }
-                }
+                    row.Spacing(5); // Jarak antara nomor dan teks
+                    row.ConstantItem(25).AlignTop().Text(numberLabel);
+                    row.RelativeItem().Text(poin.TeksPoin).Justify();
+                });
             }
         }
 
-        void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
+        // GANTI SELURUH METODE ComposeLampiran ANDA DENGAN YANG INI
+void ComposeLampiran(ColumnDescriptor column)
+{
+    // Lakukan loop pada SEMUA lampiran
+    foreach (var lampiran in _model.Lampiran.OrderBy(l => l.UrutanTampil))
+    {
+        column.Item().PageBreak();
+        column.Item().AlignLeft().Text(lampiran.JudulTeks).Bold().FontSize(14);
+        column.Item().PaddingBottom(20);
+
+        // Loop untuk setiap SubBab di dalam Lampiran
+        foreach (var subBab in lampiran.SubBab.OrderBy(s => s.UrutanTampil))
+        {
+            // Tampilkan konten SubBab (misal: "RUANG LINGKUP DAN MEKANISME...")
+            if (!string.IsNullOrWhiteSpace(subBab.Konten))
+            {
+                column.Item().AlignLeft().Text(subBab.Konten).SemiBold();
+                column.Item().PaddingBottom(10);
+            }
+
+            // Jika ini BUKAN sub-bab yang perlu logika dinamis, render semua Poin-nya seperti biasa.
+            if (!subBab.Konten.Contains("RUANG LINGKUP DAN MEKANISME"))
+            {
+                if (subBab.Poin != null && subBab.Poin.Any())
+                {
+                    RenderPoinDanTabel(column, subBab.Poin, 0);
+                }
+                continue; // Lanjut ke sub-bab berikutnya
+            }
+
+            // =================================================================
+            // --- LOGIKA KHUSUS UNTUK SUB-BAB "RUANG LINGKUP DAN MEKANISME" ---
+            
+            // LANGKAH 1: Pisahkan semua Poin menjadi dua grup
+            var semuaPoin = subBab.Poin.OrderBy(p => p.UrutanTampil).ToList();
+            var poinRuangLingkup = new List<PoinModel>();
+            var poinPenjelasan = new List<PoinModel>();
+            bool isPenjelasanSection = false;
+
+            foreach (var poin in semuaPoin)
+            {
+                if (poin.TeksPoin.Contains("Penjelasan mekanisme"))
+                {
+                    isPenjelasanSection = true;
+                }
+                if (isPenjelasanSection) { poinPenjelasan.Add(poin); }
+                else { poinRuangLingkup.Add(poin); }
+            }
+
+            // LANGKAH 2: Buat "daftar layanan aktif" dari poinRuangLingkup
+            var daftarLayananAktif = new HashSet<string>(
+                poinRuangLingkup.Skip(1).Select(p => NormalisasiNamaLayanan(p.TeksPoin))
+            );
+
+            // LANGKAH 3: Render kedua bagian secara terkontrol
+
+            // Render bagian "Ruang Lingkup"
+            if (poinRuangLingkup.Any())
+            {
+                // Render judulnya ("1. Ruang lingkup...")
+                var judulRuangLingkup = poinRuangLingkup.First();
+                column.Item().AlignLeft().Text(judulRuangLingkup.TeksPoin); // Tidak perlu SemiBold karena sudah ada di RenderPoinDanTabel
+                column.Item().PaddingBottom(10);
+
+                // Render daftar layanannya (a, b, c, ...)
+                var daftarItem = poinRuangLingkup.Skip(1).ToList();
+                for (int i = 0; i < daftarItem.Count; i++)
+                {
+                    var poin = daftarItem[i];
+                    string numberLabel = $"{(char)('a' + i)}."; 
+                    
+                    column.Item().PaddingLeft(20f).PaddingBottom(4).Row(row =>
+                    {
+                        row.Spacing(5);
+                        row.ConstantItem(25).AlignTop().Text(numberLabel);
+                        row.RelativeItem().Text(poin.TeksPoin).Justify();
+                    });
+                }
+            }
+            
+            // Render bagian "Penjelasan" dengan FILTER
+            if (poinPenjelasan.Any())
+            {
+                column.Item().Height(20); 
+                
+                var judulPenjelasan = poinPenjelasan.First();
+                column.Item().AlignLeft().Text(judulPenjelasan.TeksPoin);
+                column.Item().PaddingBottom(10);
+                
+                var tabelUntukDirender = new List<string>();
+                int penjelasanCounter = 1;
+                
+                foreach (var poin in poinPenjelasan.Skip(1))
+                {
+                    var match = Regex.Match(poin.TeksPoin, @"\[TABLE_SPECIAL\](.*?)\[/TABLE_SPECIAL\]", RegexOptions.Singleline);
+                    if (match.Success)
+                    {
+                        string kontenTabel = match.Groups[1].Value.Trim();
+                        var parts = kontenTabel.Split(new[] { '|' }, 2);
+                        if (parts.Length == 2)
+                        {
+                            string judulTabel = NormalisasiNamaLayanan(parts[0]);
+                            if (daftarLayananAktif.Contains(judulTabel))
+                            {
+                                string kontenTabelBaru = $"{penjelasanCounter}. {parts[0].Trim()}|{parts[1]}";
+                                tabelUntukDirender.Add(kontenTabelBaru);
+                                penjelasanCounter++;
+                            }
+                        }
+                    }
+                }
+                
+                if (tabelUntukDirender.Any())
+                {
+                    RenderTabelKhususMenyatu(column, tabelUntukDirender);
+                }
+            }
+        }
+    }
+}
+
+      void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
         {
             var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
-            
+
             for (int i = 0; i < orderedPoin.Count; i++)
             {
                 var poin = orderedPoin[i];
                 var teks = poin.TeksPoin;
 
-                // --- AWAL PERUBAHAN ---
-                // 1. Ubah pemeriksaan dari StartsWith menjadi Contains
+                // Logika untuk menangani [TABLE_SPECIAL]
                 if (teks.Contains("[TABLE_SPECIAL]"))
                 {
-                    // 2. Pisahkan awalan (misal: "q.") dari konten tabel
                     int tableTagIndex = teks.IndexOf("[TABLE_SPECIAL]");
                     string prefix = teks.Substring(0, tableTagIndex).Trim();
-                    
-                    // Render awalan sebagai teks biasa jika ada
+
                     if (!string.IsNullOrEmpty(prefix))
                     {
                         column.Item().PaddingLeft(initialIndent).PaddingBottom(5).Text(prefix);
                     }
 
-                    // 3. Kumpulkan semua baris tabel yang berurutan
                     var specialTableRowsContent = new List<string>();
                     int j = i;
                     while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.Contains("[TABLE_SPECIAL]"))
@@ -2338,24 +2455,24 @@ namespace pdfquestAPI.Documents
                         j++;
                     }
 
-                    // Render seluruh baris yang terkumpul sebagai satu tabel tunggal
                     RenderTabelKhususMenyatu(column, specialTableRowsContent);
-
-                    // Pindahkan indeks utama melewati baris-baris yang baru saja dirender
                     i = j - 1;
                 }
-                // --- AKHIR PERUBAHAN --- (Logika untuk [TABLE] dan teks biasa tetap sama)
+                // Logika untuk menangani [TABLE]
                 else if (teks.StartsWith("[TABLE]"))
                 {
                     RenderTabelBiasa(column, teks);
                 }
+                // Logika untuk teks biasa (TANPA penomoran otomatis)
                 else
                 {
-                    // Render sebagai teks biasa
+                    // Kode ini hanya merender teks apa adanya dari database.
+                    // Jika ada "a." di database, ia akan tampil. Jika tidak, ia tidak akan tampil.
                     float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
                     column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
                 }
 
+                // Logika untuk SubPoin
                 if (poin.SubPoin != null && poin.SubPoin.Any())
                 {
                     RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
@@ -2389,8 +2506,6 @@ namespace pdfquestAPI.Documents
 
                 foreach (var header in headers)
                 {
-                    // --- PERBAIKAN DI BARIS INI ---
-                    // Menggunakan .Background() untuk kontainer sel, bukan .BackgroundColor()
                     table.Cell().Border(1).Background(Colors.Grey.Lighten3).Padding(5).Text(header).Bold();
                 }
 
@@ -2453,7 +2568,7 @@ namespace pdfquestAPI.Documents
                                     var lines = parts[1].Split(new[] { "\\n" }, StringSplitOptions.None)
                                                     .Where(l => !string.IsNullOrWhiteSpace(l))
                                                     .ToList();
-                                    
+
                                     if (lines.Count == 1)
                                     {
                                         col.Item().Text(lines[0].Trim()).Justify();
@@ -2465,7 +2580,7 @@ namespace pdfquestAPI.Documents
                                         foreach (var line in lines)
                                         {
                                             var match = Regex.Match(line.Trim(), @"^([a-zA-Z0-9]+\.|\d+\)|\([a-zA-Z0-9]+\))\s*");
-                                            
+
                                             string numberLabel;
                                             string textContent;
 
@@ -2480,7 +2595,7 @@ namespace pdfquestAPI.Documents
                                                 textContent = line.Trim();
                                                 generatedNumberCounter++;
                                             }
-                                            
+
                                             float indent = (!string.IsNullOrWhiteSpace(numberLabel) && char.IsLetter(numberLabel.Trim(), 0))
                                                             ? 22f // Indentasi untuk sub-list (a, b, c)
                                                             : 0;  // Tidak ada indentasi untuk list utama (1, 2, 3)
@@ -2498,6 +2613,41 @@ namespace pdfquestAPI.Documents
                     }
                 }
             });
+        }
+
+       private string NormalisasiNamaLayanan(string teks)
+        {
+            if (string.IsNullOrWhiteSpace(teks))
+                return string.Empty;
+
+            var cleanedText = teks.Replace('\u00A0', ' ');
+
+            // Bersihkan awalan nomor/huruf 
+            cleanedText = Regex.Replace(cleanedText, @"^([a-zA-Z0-9]+\.|\d+\))\s*", "").Trim();
+
+            // Hapus teks di dalam kurung
+            cleanedText = Regex.Replace(cleanedText, @"\s*\([^)]*\)", "").Trim();
+            
+            // Hapus kata "dan" di akhir 
+            if (cleanedText.EndsWith(" dan", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanedText = cleanedText.Substring(0, cleanedText.Length - 4).Trim();
+            }
+
+            // =================================================================
+            // --- PERBAIKAN: Hapus kata "PELAYANAN " jika ada di awal ---
+            if (cleanedText.StartsWith("PELAYANAN ", StringComparison.OrdinalIgnoreCase))
+            {
+                // Hapus 10 karakter pertama ("PELAYANAN ")
+                cleanedText = cleanedText.Substring(10).Trim();
+            }
+            // =================================================================
+
+            // Hapus SEMUA karakter yang bukan huruf atau angka.
+            cleanedText = Regex.Replace(cleanedText, @"[^a-zA-Z0-9]", "");
+            
+            // Ubah ke huruf besar.
+            return cleanedText.ToUpper();
         }
         #endregion
     }
