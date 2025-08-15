@@ -7,6 +7,7 @@ using QuestPDF.Fluent;
 using pdfquestAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using pdfquestAPI.Dtos;
 
 namespace pdfquestAPI.Controllers
 {
@@ -66,11 +67,12 @@ namespace pdfquestAPI.Controllers
 
             try
             {
-                var hasil = await _repository.CariKontenByKeywordAsync(id, kataKunci);
+                // Panggil metode baru yang sudah kita buat
+                var hasil = await _repository.CariSemuaKontenByKeywordsAsync(id, kataKunci);
 
-                if (hasil == null)
+                if (!hasil.Any())
                 {
-                    return NotFound(new { message = $"Konten dengan kata kunci '{kataKunci}' pada perjanjian ID {id} tidak ditemukan." });
+                    return NotFound(new { message = $"Tidak ada konten yang cocok dengan kata kunci '{kataKunci}' pada perjanjian ID {id}." });
                 }
 
                 return Ok(hasil);
@@ -108,14 +110,15 @@ namespace pdfquestAPI.Controllers
             }
             try
             {
-                await _repository.UpdateKontenAsync(kontenId, updateDto.Konten);
-                return Ok(new { message = "Konten berhasil diperbarui." });
+                await _repository.UpdateKontenAsync(kontenId, updateDto);
+                return Ok(new { message = "Konten berhasil diperbarui dan diurutkan ulang." });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Gagal memperbarui konten: {ex.Message}");
             }
         }
+
 
         [HttpDelete("perjanjian/{perjanjianId}/konten/{kontenId}")]
         public async Task<IActionResult> HapusKonten(int perjanjianId, int kontenId)

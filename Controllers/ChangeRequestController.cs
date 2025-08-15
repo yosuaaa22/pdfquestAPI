@@ -1,177 +1,250 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using pdfquestAPI.Data;
+using pdfquestAPI.Dtos;
 using pdfquestAPI.Models;
 using pdfquestAPI.Repositories;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using pdfquestAPI.Dtos;
 
-[ApiController]
-[Route("api/changerequests")]
-public class ChangeRequestController : ControllerBase
+namespace pdfquestAPI.Controllers
 {
-    private readonly ApplicationDbContext _context;
-    private readonly PerjanjianKontenRepository _kontenRepository;
-
-    public ChangeRequestController(ApplicationDbContext context, PerjanjianKontenRepository kontenRepository)
-    {
-        _context = context;
-        _kontenRepository = kontenRepository;
-    }
-
     /// <summary>
-    /// Membuat sesi permintaan perubahan baru untuk sebuah perjanjian.
+    /// Controller untuk mengelola ChangeRequest (permintaan perubahan) pada perjanjian.
     /// </summary>
-    [HttpPost("perjanjian/{perjanjianId}")]
-    public async Task<IActionResult> CreateChangeRequest(int perjanjianId, [FromBody] ChangeRequestDto dto)
+    [ApiController]
+    [Route("api/changerequests")]
+    public class ChangeRequestController : ControllerBase
     {
-        var perjanjianExists = await _context.Perjanjian.AnyAsync(p => p.IdPerjanjian == perjanjianId);
-        if (!perjanjianExists)
+        #region Dependencies
+
+        private readonly ApplicationDbContext _context;
+        private readonly PerjanjianKontenRepository _kontenRepository;
+
+        #endregion
+
+        #region Constructor
+
+        public ChangeRequestController(ApplicationDbContext context, PerjanjianKontenRepository kontenRepository)
         {
-            return NotFound($"Perjanjian dengan ID {perjanjianId} tidak ditemukan.");
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _kontenRepository = kontenRepository ?? throw new ArgumentNullException(nameof(kontenRepository));
         }
 
-        var newRequest = new ChangeRequest
+        #endregion
+
+        #region Create Change Request
+
+        /// <summary>
+        /// Membuat sesi permintaan perubahan baru untuk sebuah perjanjian.
+        /// Validasi sederhana dilakukan: dto dan item harus ada.
+        /// </summary>
+        [HttpPost("perjanjian/{perjanjianId}")]
+        public async Task<ActionResult<ChangeRequestResponseDto>> CreateChangeRequest(int perjanjianId, [FromBody] ChangeRequestDto dto)
         {
-            PerjanjianId = perjanjianId,
-            DiajukanOleh = dto.DiajukanOleh,
-            Deskripsi = dto.Deskripsi,
-            Status = "Pending",
-            Items = dto.Items.Select(i => new ChangeRequestItem
+            if (dto == null) return BadRequest("Request body tidak boleh kosong.");
+            var items = dto.Items?.ToList();
+            if (items == null || items.Count == 0) return BadRequest("Items tidak boleh kosong.");
+
+            var perjanjianExists = await _context.Perjanjian.AnyAsync(p => p.IdPerjanjian == perjanjianId).ConfigureAwait(false);
+            if (!perjanjianExists)
             {
-                ActionType = i.ActionType,
-                TargetKontenId = i.TargetKontenId,
-                KontenBaru = i.KontenBaru,
-                LevelType = i.LevelType,
-                ParentId = i.ParentId,
-                AlasanPerubahan = i.AlasanPerubahan
-            }).ToList()
-
-        };
-        _context.ChangeRequests.Add(newRequest);
-        await _context.SaveChangesAsync();
-
-        var responseDto = new ChangeRequestResponseDto
-        {
-             Id = newRequest.Id,
-             PerjanjianId = newRequest.PerjanjianId,
-             TanggalRequest = newRequest.TanggalRequest,
-             DiajukanOleh = newRequest.DiajukanOleh,
-             Deskripsi = newRequest.Deskripsi,
-             Status = newRequest.Status,
-             Items = newRequest.Items.Select(itemEntity => new ChangeRequestItemResponseDto
-                {
-                    Id = itemEntity.Id,
-                    ActionType = itemEntity.ActionType,
-                    TargetKontenId = itemEntity.TargetKontenId,
-                    KontenBaru = itemEntity.KontenBaru,
-                    LevelType = itemEntity.LevelType,
-                    ParentId = itemEntity.ParentId,
-                    AlasanPerubahan = itemEntity.AlasanPerubahan
-                }).ToList()
-        };
-
-        return CreatedAtAction(nameof(GetRequestById), new { requestId = newRequest.Id }, responseDto);
-    }
-
-    /// <summary>
-    /// Mengambil detail sebuah permintaan perubahan beserta item-itemnya.
-    /// </summary>
-    [HttpGet("{requestId}")]
-    public async Task<IActionResult> GetRequestById(int requestId)
-    {
-        var requestEntity = await _context.ChangeRequests
-            .AsNoTracking()
-            .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == requestId);
-
-        if (requestEntity == null) return NotFound();
-
-        var responseDto = new ChangeRequestResponseDto
-        {
-            Id = requestEntity.Id,
-            PerjanjianId = requestEntity.PerjanjianId,
-            TanggalRequest = requestEntity.TanggalRequest,
-            DiajukanOleh = requestEntity.DiajukanOleh,
-            Deskripsi = requestEntity.Deskripsi,
-            Status = requestEntity.Status,
-            TanggalDiputuskan = requestEntity.TanggalDiputuskan,
-            DiputuskanOleh = requestEntity.DiputuskanOleh,
-            Items = requestEntity.Items.Select(itemEntity => new ChangeRequestItemResponseDto
-            {
-                Id = itemEntity.Id,
-                ActionType = itemEntity.ActionType,
-                TargetKontenId = itemEntity.TargetKontenId,
-                KontenBaru = itemEntity.KontenBaru,
-                LevelType = itemEntity.LevelType,
-                ParentId = itemEntity.ParentId,
-                AlasanPerubahan = itemEntity.AlasanPerubahan
-            }).ToList()
-        };
-
-        return Ok(responseDto);
-    }
-
-    /// <summary>
-    /// Menyetujui sebuah permintaan perubahan dan MENGEKSEKUSI semua item di dalamnya.
-    /// </summary>
-    [HttpPost("{requestId}/approve")]
-    public async Task<IActionResult> ApproveRequest(int requestId, [FromQuery] string approverName)
-    {
-        var request = await _context.ChangeRequests
-            .Include(r => r.Items)
-            .FirstOrDefaultAsync(r => r.Id == requestId);
-
-        if (request == null) return NotFound("Request tidak ditemukan.");
-        if (request.Status != "Pending") return BadRequest("Request ini sudah tidak pending lagi.");
-
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        try
-        {
-            foreach (var item in request.Items)
-            {
-                switch (item.ActionType)
-                {
-                    case ChangeActionType.CREATE:
-                        var createDto = new CreateKontenDto
-                        {
-                            IdPerjanjian = request.PerjanjianId,
-                            ParentId = item.ParentId,
-                            LevelType = item.LevelType,
-                            Konten = item.KontenBaru
-                        };
-                        await _kontenRepository.TambahDanUrutkanUlangKontenAsync(createDto);
-                        break;
-
-                    case ChangeActionType.UPDATE:
-                        if (!item.TargetKontenId.HasValue)
-                            throw new InvalidOperationException("TargetKontenId harus ada untuk aksi UPDATE.");
-                        await _kontenRepository.UpdateKontenAsync(item.TargetKontenId.Value, item.KontenBaru);
-                        break;
-
-                    case ChangeActionType.DELETE:
-                        if (!item.TargetKontenId.HasValue)
-                            throw new InvalidOperationException("TargetKontenId harus ada untuk aksi DELETE.");
-                        await _kontenRepository.HapusDanUrutkanUlangKontenAsync(item.TargetKontenId.Value, request.PerjanjianId);
-                        break;
-                }
+                return NotFound($"Perjanjian dengan ID {perjanjianId} tidak ditemukan.");
             }
 
-            request.Status = "Approved";
-            request.DiputuskanOleh = approverName;
-            request.TanggalDiputuskan = DateTime.Now;
-            
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+            var newRequest = new ChangeRequest
+            {
+                PerjanjianId = perjanjianId,
+                DiajukanOleh = dto.DiajukanOleh,
+                Deskripsi = dto.Deskripsi,
+                Status = "Correction", // Status awal
+                Items = new List<ChangeRequestItem>()
+            };
 
-            return Ok(new { message = "Permintaan berhasil disetujui dan semua perubahan telah dieksekusi." });
+            foreach (var i in items)
+            {
+                // Jika aksi UPDATE atau DELETE baca konten sebelumnya (jika ada target id)
+                string? kontenSebelumnya = null;
+                if ((i.ActionType == ChangeActionType.UPDATE || i.ActionType == ChangeActionType.DELETE) && i.TargetKontenId.HasValue)
+                {
+                    kontenSebelumnya = await _kontenRepository.GetKontenTextByIdAsync(i.TargetKontenId.Value).ConfigureAwait(false);
+                }
+
+                var itemEntity = new ChangeRequestItem
+                {
+                    ActionType = i.ActionType,
+                    TargetKontenId = i.TargetKontenId,
+                    KontenBaru = i.KontenBaru,
+                    KontenSebelumnya = kontenSebelumnya,
+                    LevelType = i.LevelType,
+                    ParentId = i.ParentId,
+                    UrutanTampilBaru = i.UrutanTampilBaru,
+                    AlasanPerubahan = i.AlasanPerubahan
+                };
+
+                newRequest.Items.Add(itemEntity);
+            }
+
+            _context.ChangeRequests.Add(newRequest);
+            await _context.SaveChangesAsync().ConfigureAwait(false);
+
+            var responseDto = MapToResponseDto(newRequest);
+
+            // Mengembalikan lokasi resource yang baru dibuat (GetRequestById -> route param requestId)
+            return CreatedAtAction(nameof(GetRequestById), new { requestId = newRequest.Id }, responseDto);
         }
-        catch (Exception ex)
+
+        #endregion
+
+        #region Get Request
+
+        /// <summary>
+        /// Mengambil detail sebuah permintaan perubahan beserta item-itemnya.
+        /// </summary>
+        [HttpGet("{requestId}")]
+        public async Task<ActionResult<ChangeRequestResponseDto>> GetRequestById(int requestId)
         {
-            await transaction.RollbackAsync();
-            return StatusCode(500, $"Terjadi kesalahan saat mengeksekusi perubahan: {ex.Message}");
+            var requestEntity = await _context.ChangeRequests
+                .AsNoTracking()
+                .Include(r => r.Items)
+                .FirstOrDefaultAsync(r => r.Id == requestId)
+                .ConfigureAwait(false);
+
+            if (requestEntity == null) return NotFound();
+
+            var responseDto = MapToResponseDto(requestEntity);
+            return Ok(responseDto);
         }
+
+        #endregion
+
+        #region Approve Request
+
+        /// <summary>
+        /// Menyetujui sebuah permintaan perubahan dan mengeksekusi semua item di dalamnya.
+        /// Hanya request dengan status "Correction" yang dapat disetujui.
+        /// </summary>
+        [HttpPost("{requestId}/approve")]
+        public async Task<IActionResult> ApproveRequest(int requestId, [FromQuery] string approverName)
+        {
+            var request = await _context.ChangeRequests
+                .Include(r => r.Items)
+                .FirstOrDefaultAsync(r => r.Id == requestId)
+                .ConfigureAwait(false);
+
+            if (request == null) return NotFound("Request tidak ditemukan.");
+            if (!string.Equals(request.Status, "Correction", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Hanya request dengan status 'Correction' yang bisa disetujui.");
+
+            var items = request.Items?.ToList() ?? new List<ChangeRequestItem>();
+
+            await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
+            try
+            {
+                foreach (var item in items)
+                {
+                    switch (item.ActionType)
+                    {
+                        case ChangeActionType.CREATE:
+                            if (!item.UrutanTampilBaru.HasValue)
+                                throw new InvalidOperationException("UrutanTampilBaru harus ada untuk aksi CREATE.");
+                            if (item.LevelType == null)
+                                throw new InvalidOperationException("LevelType harus ada untuk aksi CREATE.");
+                            if (item.KontenBaru == null)
+                                throw new InvalidOperationException("KontenBaru harus ada untuk aksi CREATE.");
+
+                            var createDto = new CreateKontenDto
+                            {
+                                IdPerjanjian = request.PerjanjianId,
+                                ParentId = item.ParentId,
+                                LevelType = item.LevelType ?? throw new InvalidOperationException("LevelType harus ada untuk aksi CREATE."),
+                                Konten = item.KontenBaru ?? throw new InvalidOperationException("KontenBaru harus ada untuk aksi CREATE."),
+                                UrutanTampil = item.UrutanTampilBaru.Value
+                            };
+                            await _kontenRepository.TambahDanUrutkanUlangKontenAsync(createDto).ConfigureAwait(false);
+                            break;
+
+                        case ChangeActionType.UPDATE:
+                            if (!item.TargetKontenId.HasValue)
+                                throw new InvalidOperationException("TargetKontenId harus ada untuk aksi UPDATE.");
+                            if (!item.UrutanTampilBaru.HasValue)
+                                throw new InvalidOperationException("UrutanTampilBaru harus ada untuk aksi UPDATE.");
+
+                            var updateDto = new UpdateKontenDto
+                            {
+                                Konten = item.KontenBaru ?? throw new InvalidOperationException("KontenBaru harus ada untuk aksi UPDATE."),
+                                UrutanTampil = item.UrutanTampilBaru.Value
+                            };
+                            await _kontenRepository.UpdateKontenAsync(item.TargetKontenId.Value, updateDto).ConfigureAwait(false);
+                            break;
+
+                        case ChangeActionType.DELETE:
+                            if (!item.TargetKontenId.HasValue)
+                                throw new InvalidOperationException("TargetKontenId harus ada untuk aksi DELETE.");
+                            await _kontenRepository.HapusDanUrutkanUlangKontenAsync(item.TargetKontenId.Value, request.PerjanjianId).ConfigureAwait(false);
+                            break;
+
+                        default:
+                            throw new InvalidOperationException($"Aksi tidak dikenali: {item.ActionType}");
+                    }
+                }
+
+                request.Status = "Approved";
+                request.DiputuskanOleh = approverName;
+                request.TanggalDiputuskan = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+
+                return Ok(new { message = "Permintaan berhasil disetujui dan semua perubahan telah dieksekusi." });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                // Jangan membocorkan detail sensitif, hanya kembalikan pesan umum + exception message untuk debugging
+                return StatusCode(500, $"Terjadi kesalahan saat mengeksekusi perubahan: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Helpers
+
+        /// <summary>
+        /// Map entity ChangeRequest ke DTO response.
+        /// Dipisahkan agar mapping konsisten dan mudah dibaca.
+        /// </summary>
+        private static ChangeRequestResponseDto MapToResponseDto(ChangeRequest requestEntity)
+        {
+            return new ChangeRequestResponseDto
+            {
+                Id = requestEntity.Id,
+                PerjanjianId = requestEntity.PerjanjianId,
+                TanggalRequest = requestEntity.TanggalRequest,
+                DiajukanOleh = requestEntity.DiajukanOleh,
+                Deskripsi = requestEntity.Deskripsi,
+                Status = requestEntity.Status,
+                TanggalDiputuskan = requestEntity.TanggalDiputuskan,
+                DiputuskanOleh = requestEntity.DiputuskanOleh,
+                Items = (requestEntity.Items ?? Enumerable.Empty<ChangeRequestItem>())
+                    .Select(itemEntity => new ChangeRequestItemResponseDto
+                    {
+                        Id = itemEntity.Id,
+                        ActionType = itemEntity.ActionType,
+                        TargetKontenId = itemEntity.TargetKontenId,
+                        KontenSebelumnya = itemEntity.KontenSebelumnya,
+                        KontenBaru = itemEntity.KontenBaru,
+                        LevelType = itemEntity.LevelType,
+                        ParentId = itemEntity.ParentId,
+                        UrutanTampilBaru = itemEntity.UrutanTampilBaru,
+                        AlasanPerubahan = itemEntity.AlasanPerubahan
+                    })
+                    .ToList()
+            };
+        }
+
+        #endregion
     }
 }
