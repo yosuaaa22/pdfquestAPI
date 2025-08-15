@@ -1,9 +1,16 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using pdfquestAPI.Dtos.Perjanjian;
+using pdfquestAPI.Interfaces;
+using pdfquestAPI.Models;
+
 namespace pdfquestAPI.Services
 {
-    using pdfquestAPI.Dtos.Perjanjian;
-    using pdfquestAPI.Interfaces;
-    using pdfquestAPI.Models;
-
+    /// <summary>
+    /// Layanan untuk operasi CRUD terkait entitas Perjanjian.
+    /// Menggunakan UnitOfWork untuk mengakses repository terkait.
+    /// </summary>
     public class PerjanjianService : IPerjanjianService
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -13,12 +20,19 @@ namespace pdfquestAPI.Services
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Ambil semua perjanjian yang tersedia.
+        /// </summary>
         public async Task<IEnumerable<PerjanjianDto>> GetAllAsync()
         {
             var perjanjianList = await _unitOfWork.Perjanjian.GetAllAsync();
-            return perjanjianList.Select(p => MapToDto(p));
+            return perjanjianList.Select(MapToDto);
         }
 
+        /// <summary>
+        /// Ambil perjanjian berdasarkan ID.
+        /// Melempar KeyNotFoundException jika tidak ditemukan.
+        /// </summary>
         public async Task<PerjanjianDto> GetByIdAsync(int id)
         {
             var perjanjian = await _unitOfWork.Perjanjian.GetByIdAsync(id);
@@ -26,9 +40,14 @@ namespace pdfquestAPI.Services
             {
                 throw new KeyNotFoundException($"Perjanjian dengan ID {id} tidak ditemukan.");
             }
+
             return MapToDto(perjanjian);
         }
 
+        /// <summary>
+        /// Buat perjanjian baru.
+        /// Memastikan penyedia layanan yang dirujuk ada sebelum menyimpan.
+        /// </summary>
         public async Task<PerjanjianDto> CreateAsync(CreatePerjanjianDto createDto)
         {
             // Validasi: Pastikan Penyedia Layanan ada sebelum membuat perjanjian
@@ -55,6 +74,10 @@ namespace pdfquestAPI.Services
             return MapToDto(newPerjanjian);
         }
 
+        /// <summary>
+        /// Perbarui data perjanjian berdasarkan ID.
+        /// Memastikan entitas perjanjian dan penyedia layanan tujuan ada.
+        /// </summary>
         public async Task UpdateAsync(int id, UpdatePerjanjianDto updateDto)
         {
             var perjanjianToUpdate = await _unitOfWork.Perjanjian.GetByIdAsync(id);
@@ -70,7 +93,7 @@ namespace pdfquestAPI.Services
                 throw new ArgumentException($"Penyedia Layanan dengan ID {updateDto.IdPenyedia} tidak ditemukan.");
             }
 
-            // Update properti
+            // Lakukan update properti
             perjanjianToUpdate.IdPenyedia = updateDto.IdPenyedia;
             perjanjianToUpdate.NoPtInhealth = updateDto.NoPtInhealth;
             perjanjianToUpdate.NoPtPihakKedua = updateDto.NoPtPihakKedua;
@@ -83,6 +106,10 @@ namespace pdfquestAPI.Services
             await _unitOfWork.CompleteAsync();
         }
 
+        /// <summary>
+        /// Hapus perjanjian berdasarkan ID.
+        /// Melempar KeyNotFoundException jika tidak ditemukan.
+        /// </summary>
         public async Task DeleteAsync(int id)
         {
             var perjanjianToDelete = await _unitOfWork.Perjanjian.GetByIdAsync(id);
@@ -95,7 +122,10 @@ namespace pdfquestAPI.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        // Helper method untuk mapping agar tidak duplikat kode
+        /// <summary>
+        /// Mapping model Perjanjian ke PerjanjianDto.
+        /// Dipisahkan untuk menghindari duplikasi kode mapping.
+        /// </summary>
         private PerjanjianDto MapToDto(Perjanjian perjanjian)
         {
             return new PerjanjianDto

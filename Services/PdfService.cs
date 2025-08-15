@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using pdfquestAPI.Data; // Pastikan namespace DbContext Anda sudah benar
+using pdfquestAPI.Data;
 using pdfquestAPI.Documents;
 using pdfquestAPI.Documents.Models;
 using pdfquestAPI.Interfaces;
@@ -24,106 +24,123 @@ namespace pdfquestAPI.Services
             _context = context;
         }
 
+        /// <summary>
+        /// Generate PDF agreement bytes for a given provider (id_penyedia).
+        /// </summary>
         public async Task<byte[]> GeneratePerjanjianPdfAsync(int id_penyedia)
         {
-            // Menggunakan id_penyedia untuk membangun model
             var model = await BuildPerjanjianModelAsync(id_penyedia);
             var document = new PerjanjianDocument(model);
-            byte[] pdfBytes = document.GeneratePdf();
-            return pdfBytes;
+            return document.GeneratePdf();
         }
 
+        /// <summary>
+        /// Build the document model for the agreement based on id_penyedia.
+        /// - Retrieves specific provider data
+        /// - Loads master template sections (ketentuan khusus and lampiran structure)
+        /// - Loads provider-specific table data (PIC and Tindakan Medis)
+        /// </summary>
         private async Task<PerjanjianDocumentModel> BuildPerjanjianModelAsync(int id_penyedia)
-{
-    // Mengambil data spesifik berdasarkan id_penyedia
-    var pihakKedua = await _unitOfWork.PenyediaLayanan.GetByIdAsync(id_penyedia)
-        ?? throw new KeyNotFoundException($"Penyedia Layanan dengan ID {id_penyedia} tidak ditemukan.");
-
-    var perjanjian = await _context.Perjanjian.FirstOrDefaultAsync(p => p.IdPenyedia == id_penyedia)
-        ?? throw new KeyNotFoundException($"Perjanjian untuk Penyedia Layanan ID {id_penyedia} tidak ditemukan.");
-
-    var pihakPertama = (await _unitOfWork.PihakPertama.GetAllAsync()).FirstOrDefault()
-        ?? throw new KeyNotFoundException("Data Pihak Pertama tidak ditemukan.");
-
-    // --- PERUBAHAN LOGIKA PENGAMBILAN DATA ---
-
-    // 1. Mengambil data Ketentuan Khusus dari MASTER TEMPLATE (id_penyedia IS NULL)
-    var ketentuanKhusus = await GetHierarchicalDataAsync(p => p.IdPenyedia == null && !(p.JudulTeks.StartsWith("LAMPIRAN")));
-
-    // 2. Mengambil data struktur Lampiran dari MASTER TEMPLATE (id_penyedia IS NULL)
-    var lampiran = await GetHierarchicalDataAsync(p => p.IdPenyedia == null && p.JudulTeks.StartsWith("LAMPIRAN"));
-
-    // 3. Mengambil data ISI TABEL yang SPESIFIK untuk id_penyedia yang diminta
-    var lampiranPicData = await _context.Lampiran_PIC
-        .Where(p => p.IdPenyedia == id_penyedia) // Tetap menggunakan id_penyedia
-        .Select(p => new PicModel
         {
-            JenisPIC = p.JenisPIC,
-            NamaPIC = p.NamaPIC,
-            NomorTelepon = p.NomorTelepon,
-            AlamatEmail = p.AlamatEmail
-        })
-        .ToListAsync();
+            // Provider (pihak kedua)
+            var pihakKedua = await _unitOfWork.PenyediaLayanan.GetByIdAsync(id_penyedia)
+                ?? throw new KeyNotFoundException($"Penyedia Layanan dengan ID {id_penyedia} tidak ditemukan.");
 
-    var lampiranTindakanMedisData = await _context.Lampiran_TindakanMedis
-        .Where(t => t.IdPenyedia == id_penyedia) // Tetap menggunakan id_penyedia
-        .Select(t => new TindakanMedisModel
-        {
-            JenisTindakanMedis = t.JenisTindakanMedis,
-            Tarif = t.Tarif,
-            Keterangan = t.Keterangan
-        })
-        .ToListAsync();
+            // Perjanjian record that references the provider
+            var perjanjian = await _context.Perjanjian.FirstOrDefaultAsync(p => p.IdPenyedia == id_penyedia)
+                ?? throw new KeyNotFoundException($"Perjanjian untuk Penyedia Layanan ID {id_penyedia} tidak ditemukan.");
 
-    // --- AKHIR PERUBAHAN ---
+            // Pihak pertama (diasumsikan hanya satu entri)
+            var pihakPertama = (await _unitOfWork.PihakPertama.GetAllAsync()).FirstOrDefault()
+                ?? throw new KeyNotFoundException("Data Pihak Pertama tidak ditemukan.");
 
-    return new PerjanjianDocumentModel
-    {
-        Perjanjian = perjanjian,
-        PihakPertama = pihakPertama,
-        PihakKedua = pihakKedua,
-        KetentuanKhusus = ketentuanKhusus,
-        Lampiran = lampiran,
-        LampiranPic = lampiranPicData,
-        LampiranTindakanMedis = lampiranTindakanMedisData
-    };
-}
+            // Ambil struktur teks dari master template (id_penyedia == null)
+            // - Ketentuan khusus: semua judul yang bukan Lampiran
+            var ketentuanKhusus = await GetHierarchicalDataAsync(p => p.IdPenyedia == null && (p.JudulTeks == null || !p.JudulTeks.StartsWith("LAMPIRAN")));
 
-        private async Task<List<BabModel>> GetHierarchicalDataAsync(Expression<Func<JudulIsi, bool>> filter)
-{
-    // Menggunakan Include dan ThenInclude adalah cara paling efisien dan direkomendasikan
-    var babDataFromDb = await _context.JudulIsi
-        .AsNoTracking() // Baik untuk performa karena data ini hanya untuk dibaca
-        .Where(filter)
-        .Include(j => j.SubBab)
-            .ThenInclude(sb => sb.Poin) // <-- EF akan mengambil semua data Poin yang terkait
-        .OrderBy(j => j.UrutanTampil)
-        .ToListAsync();
+            // - Lampiran: struktur lampiran (judul yang berawalan "LAMPIRAN")
+            var lampiran = await GetHierarchicalDataAsync(p => p.IdPenyedia == null && p.JudulTeks != null && p.JudulTeks.StartsWith("LAMPIRAN"));
 
-    // Sekarang kita hanya perlu memetakan (mapping) dari model database ke model dokumen
-    var babList = babDataFromDb.Select(babDb => new BabModel
-    {
-        JudulTeks = babDb.JudulTeks ?? string.Empty,
-        UrutanTampil = babDb.UrutanTampil,
-        SubBab = babDb.SubBab.OrderBy(sb => sb.UrutanTampil).Select(sbDb => new SubBabModel
-        {
-            Konten = sbDb.Konten ?? string.Empty,
-            UrutanTampil = sbDb.UrutanTampil,
-            // Cukup petakan list datar yang sudah diambil oleh ThenInclude
-            Poin = sbDb.Poin.OrderBy(p => p.UrutanTampil).Select(pDb => new PoinModel
+            // Ambil data tabel yang spesifik untuk penyedia ini
+            var lampiranPicData = await _context.Lampiran_PIC
+                .Where(p => p.IdPenyedia == id_penyedia)
+                .Select(p => new PicModel
+                {
+                    JenisPIC = p.JenisPIC,
+                    NamaPIC = p.NamaPIC,
+                    NomorTelepon = p.NomorTelepon,
+                    AlamatEmail = p.AlamatEmail
+                })
+                .ToListAsync();
+
+            var lampiranTindakanMedisData = await _context.Lampiran_TindakanMedis
+                .Where(t => t.IdPenyedia == id_penyedia)
+                .Select(t => new TindakanMedisModel
+                {
+                    JenisTindakanMedis = t.JenisTindakanMedis,
+                    Tarif = t.Tarif,
+                    Keterangan = t.Keterangan
+                })
+                .ToListAsync();
+
+            return new PerjanjianDocumentModel
             {
-                Id = pDb.Id,
-                ParentId = pDb.Parent, // Pastikan nama kolom 'Parent' sudah benar
-                TeksPoin = pDb.TeksPoin ?? string.Empty,
-                UrutanTampil = pDb.UrutanTampil
-                // Properti SubPoin tidak ada di sini, karena kita menggunakan list datar
-            }).ToList()
-        }).ToList()
-    }).ToList();
+                Perjanjian = perjanjian,
+                PihakPertama = pihakPertama,
+                PihakKedua = pihakKedua,
+                KetentuanKhusus = ketentuanKhusus,
+                Lampiran = lampiran,
+                LampiranPic = lampiranPicData,
+                LampiranTindakanMedis = lampiranTindakanMedisData
+            };
+        }
 
-    return babList;
-}
+        /// <summary>
+        /// Retrieve hierarchical Bab -> SubBab -> Poin data using eager loading.
+        /// Returns mapped domain models suitable for document generation.
+        /// </summary>
+        private async Task<List<BabModel>> GetHierarchicalDataAsync(Expression<Func<JudulIsi, bool>> filter)
+        {
+            // Gunakan AsNoTracking karena data hanya dibaca untuk pembuatan dokumen
+            var babDataFromDb = await _context.JudulIsi
+                .AsNoTracking()
+                .Where(filter)
+                .Include(j => j.SubBab)
+                    .ThenInclude(sb => sb.Poin)
+                .OrderBy(j => j.UrutanTampil)
+                .ToListAsync();
 
+            // Map entity -> document model, menjaga urutan tampil
+            var babList = babDataFromDb.Select(babDb => new BabModel
+            {
+                JudulTeks = babDb.JudulTeks ?? string.Empty,
+                UrutanTampil = babDb.UrutanTampil,
+                SubBab = babDb.SubBab
+                    .OrderBy(sb => sb.UrutanTampil)
+                    .Select(sbDb => new SubBabModel
+                    {
+                        Konten = sbDb.Konten ?? string.Empty,
+                        UrutanTampil = sbDb.UrutanTampil,
+                        Poin = sbDb.Poin
+                            .OrderBy(p => p.UrutanTampil)
+                            .Select(pDb => new PoinModel
+                            {
+                                Id = pDb.Id,
+                                ParentId = pDb.Parent,
+                                TeksPoin = pDb.TeksPoin ?? string.Empty,
+                                UrutanTampil = pDb.UrutanTampil
+                                // SubPoin dibangun terpisah jika diperlukan
+                            }).ToList()
+                    }).ToList()
+            }).ToList();
+
+            return babList;
+        }
+
+        /// <summary>
+        /// Build nested point tree (Poin -> SubPoin) from a flat list.
+        /// Digunakan jika struktur poin memiliki parent-child di dalam satu subBab.
+        /// </summary>
         private List<PoinModel> BuildPoinTree(List<PoinKetentuanKhusus> allPoinForSubBab, int? parentId)
         {
             return allPoinForSubBab

@@ -1,9 +1,16 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using pdfquestAPI.Dtos.PoinKetentuanKhusus;
+using pdfquestAPI.Interfaces;
+using pdfquestAPI.Models;
+
 namespace pdfquestAPI.Services
 {
-    using pdfquestAPI.Dtos.PoinKetentuanKhusus;
-    using pdfquestAPI.Interfaces;
-    using pdfquestAPI.Models;
-
+    /// <summary>
+    /// Service untuk operasi CRUD PoinKetentuanKhusus.
+    /// Menggunakan pattern Unit of Work untuk mengakses repository terkait.
+    /// </summary>
     public class PoinKetentuanKhususService : IPoinKetentuanKhususService
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -13,12 +20,18 @@ namespace pdfquestAPI.Services
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Ambil semua poin dan map ke DTO.
+        /// </summary>
         public async Task<IEnumerable<PoinKetentuanKhususDto>> GetAllAsync()
         {
             var poinList = await _unitOfWork.PoinKetentuanKhusus.GetAllAsync();
-            return poinList.Select(p => MapToDto(p));
+            return poinList.Select(MapToDto);
         }
 
+        /// <summary>
+        /// Ambil poin berdasarkan ID. Jika tidak ditemukan, lempar KeyNotFoundException.
+        /// </summary>
         public async Task<PoinKetentuanKhususDto> GetByIdAsync(int id)
         {
             var poin = await _unitOfWork.PoinKetentuanKhusus.GetByIdAsync(id);
@@ -29,9 +42,12 @@ namespace pdfquestAPI.Services
             return MapToDto(poin);
         }
 
+        /// <summary>
+        /// Buat Poin baru. Memastikan SubBab (parent) ada sebelum menyimpan.
+        /// </summary>
         public async Task<PoinKetentuanKhususDto> CreateAsync(CreatePoinKetentuanKhususDto createDto)
         {
-            // Validasi: Pastikan SubBab (parent) ada sebelum membuat Poin
+            // Pastikan SubBab terkait ada
             var subBabExists = await _unitOfWork.SubBabKetentuanKhusus.GetByIdAsync(createDto.IdSubBab);
             if (subBabExists == null)
             {
@@ -52,6 +68,9 @@ namespace pdfquestAPI.Services
             return MapToDto(newPoin);
         }
 
+        /// <summary>
+        /// Perbarui Poin yang sudah ada. Memastikan entitas sumber dan SubBab baru ada.
+        /// </summary>
         public async Task UpdateAsync(int id, UpdatePoinKetentuanKhususDto updateDto)
         {
             var poinToUpdate = await _unitOfWork.PoinKetentuanKhusus.GetByIdAsync(id);
@@ -60,14 +79,14 @@ namespace pdfquestAPI.Services
                 throw new KeyNotFoundException($"PoinKetentuanKhusus dengan ID {id} tidak ditemukan.");
             }
 
-            // Validasi: Pastikan SubBab (parent) yang baru juga ada
+            // Pastikan SubBab baru ada
             var subBabExists = await _unitOfWork.SubBabKetentuanKhusus.GetByIdAsync(updateDto.IdSubBab);
             if (subBabExists == null)
             {
                 throw new ArgumentException($"SubBabKetentuanKhusus dengan ID {updateDto.IdSubBab} tidak ditemukan.");
             }
 
-            // Update properti
+            // Perbarui properti entitas
             poinToUpdate.IdSubBab = updateDto.IdSubBab;
             poinToUpdate.TeksPoin = updateDto.TeksPoin;
             poinToUpdate.Parent = updateDto.Parent;
@@ -77,6 +96,9 @@ namespace pdfquestAPI.Services
             await _unitOfWork.CompleteAsync();
         }
 
+        /// <summary>
+        /// Hapus Poin berdasarkan ID. Jika tidak ada, lempar KeyNotFoundException.
+        /// </summary>
         public async Task DeleteAsync(int id)
         {
             var poinToDelete = await _unitOfWork.PoinKetentuanKhusus.GetByIdAsync(id);
@@ -89,7 +111,9 @@ namespace pdfquestAPI.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        // Helper method untuk mapping agar tidak duplikat kode
+        /// <summary>
+        /// Helper untuk mapping entitas ke DTO agar tidak duplikasi kode.
+        /// </summary>
         private PoinKetentuanKhususDto MapToDto(PoinKetentuanKhusus poin)
         {
             return new PoinKetentuanKhususDto
