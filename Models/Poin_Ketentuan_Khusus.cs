@@ -23,6 +23,6 @@ namespace pdfquestAPI.Models
         public int UrutanTampil { get; set; }
 
         [ForeignKey("IdSubBab")]
-    public virtual SubBabKetentuanKhusus SubBabKetentuanKhusus { get; set; }
+    public virtual SubBabKetentuanKhusus? SubBabKetentuanKhusus { get; set; }
     }
 }

@@ -20,10 +20,10 @@ namespace pdfquestAPI.Models
         public int UrutanTampil { get; set; }
 
         [ForeignKey("IdJudul")]
-    public virtual JudulIsi JudulIsi { get; set; }
+    public virtual JudulIsi JudulIsi { get; set; } = null!;
 
     // Properti navigasi ke PoinKetentuanKhusus (anak-anaknya)
-    public virtual ICollection<PoinKetentuanKhusus> Poin { get; set; }
+    public virtual ICollection<PoinKetentuanKhusus> Poin { get; set; } = new List<PoinKetentuanKhusus>();
 
     }
 }
