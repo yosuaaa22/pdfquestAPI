@@ -25,6 +25,8 @@ namespace pdfquestAPI.Models
         // ID dari konten yang akan diubah/dihapus. Null jika ActionType = CREATE.
         public int? TargetKontenId { get; set; }
 
+        public string? KontenSebelumnya { get; set; }
+
         // Untuk CREATE & UPDATE: Konten baru.
         public string? KontenBaru { get; set; }
 
@@ -36,8 +38,10 @@ namespace pdfquestAPI.Models
 
         public string? AlasanPerubahan { get; set; }
 
+        public int? UrutanTampilBaru { get; set; }
+
         // Navigation Property
         [ForeignKey("ChangeRequestId")]
-        public virtual ChangeRequest ChangeRequest { get; set; }
+        public virtual ChangeRequest? ChangeRequest { get; set; }
     }
 }

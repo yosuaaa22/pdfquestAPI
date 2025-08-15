@@ -19,13 +19,13 @@ namespace pdfquestAPI.Models
 
         [Required]
         [MaxLength(255)]
-        public required string DiajukanOleh { get; set; } // e.g., "Provider_ABC" atau "Inhealth_User"
+        public required string DiajukanOleh { get; set; }
 
-        public string? Deskripsi { get; set; } // Deskripsi umum request, misal: "Revisi Bab 3"
+        public string? Deskripsi { get; set; }
 
         [Required]
         [MaxLength(50)]
-        public required string Status { get; set; } // "Pending", "Approved", "Rejected"
+        public required string Status { get; set; }
 
         public DateTime? TanggalDiputuskan { get; set; }
 
@@ -34,7 +34,7 @@ namespace pdfquestAPI.Models
 
         // Navigation Properties
         [ForeignKey("PerjanjianId")]
-        public virtual Perjanjian Perjanjian { get; set; }
+        public virtual Perjanjian Perjanjian { get; set; } = null!;
 
         public virtual ICollection<ChangeRequestItem> Items { get; set; } = new List<ChangeRequestItem>();
     }
