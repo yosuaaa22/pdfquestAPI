@@ -9,7 +9,6 @@ namespace pdfquestAPI.Dtos.PoinKetentuanKhusus
 
         public string? TeksPoin { get; set; }
 
-        // Parent bisa null, jadi tidak perlu [Required]
         public int? Parent { get; set; }
 
         [Required]
