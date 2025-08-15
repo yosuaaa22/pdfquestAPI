@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using pdfquestAPI.Repositories; // Pastikan namespace repository Anda sudah benar
+using pdfquestAPI.Repositories;
 using System;
 using System.Threading.Tasks;
 using pdfquestAPI.Documents;
@@ -25,10 +25,6 @@ namespace pdfquestAPI.Controllers
             _context = context; // Sekarang baris ini valid karena 'context' sudah ada.
         }
 
-        // Endpoint untuk generate PDF kustom sudah DIHAPUS dari sini
-
-        // Endpoint-endpoint di bawah ini sekarang akan berfungsi kembali
-        // karena _repository sudah didefinisikan dengan benar.
         /// <summary>
         /// Menghasilkan PDF dari data perjanjian terkini yang telah disetujui dan diubah.
         /// </summary>
@@ -98,39 +94,6 @@ namespace pdfquestAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Gagal menambah konten: {ex.Message}");
-            }
-        }
-
-        [HttpPut("perjanjian/konten/{kontenId}")]
-        public async Task<IActionResult> UpdateKonten(int kontenId, [FromBody] UpdateKontenDto updateDto)
-        {
-            if (updateDto == null || string.IsNullOrEmpty(updateDto.Konten))
-            {
-                return BadRequest("Konten tidak boleh kosong.");
-            }
-            try
-            {
-                await _repository.UpdateKontenAsync(kontenId, updateDto);
-                return Ok(new { message = "Konten berhasil diperbarui dan diurutkan ulang." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Gagal memperbarui konten: {ex.Message}");
-            }
-        }
-
-
-        [HttpDelete("perjanjian/{perjanjianId}/konten/{kontenId}")]
-        public async Task<IActionResult> HapusKonten(int perjanjianId, int kontenId)
-        {
-            try
-            {
-                await _repository.HapusDanUrutkanUlangKontenAsync(kontenId, perjanjianId);
-                return Ok(new { message = "Konten berhasil dihapus dan diurutkan ulang." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Gagal menghapus konten: {ex.Message}");
             }
         }
     }
