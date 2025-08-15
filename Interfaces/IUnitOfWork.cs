@@ -1,11 +1,11 @@
-using pdfquestAPI.Models; // <-- DIPERBAIKI: Menambahkan using untuk Models
+using pdfquestAPI.Models;
 
 namespace pdfquestAPI.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
-        // Properti untuk mengakses setiap "Staf Gudang" (Repository) yang spesifik.
-        // Ini disesuaikan dengan semua DbSet di ApplicationDbContext Anda.
+        // Properti untuk mengakses setiap Repository yang spesifik.
+        // disesuaikan dengan semua DbSet di ApplicationDbContext.
         IGenericRepository<JudulIsi> JudulIsi { get; }
         IGenericRepository<PenyediaLayanan> PenyediaLayanan { get; }
         IGenericRepository<Perjanjian> Perjanjian { get; }
