@@ -78,23 +78,5 @@ namespace pdfquestAPI.Controllers
                 return StatusCode(500, $"Terjadi kesalahan internal: {ex.Message}");
             }
         }
-
-        [HttpPost("perjanjian/konten")]
-        public async Task<IActionResult> TambahKonten([FromBody] CreateKontenDto createDto)
-        {
-            if (createDto == null || string.IsNullOrEmpty(createDto.Konten))
-            {
-                return BadRequest("Data konten tidak boleh kosong.");
-            }
-            try
-            {
-                await _repository.TambahDanUrutkanUlangKontenAsync(createDto);
-                return Ok(new { message = "Konten berhasil ditambahkan dan diurutkan ulang." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Gagal menambah konten: {ex.Message}");
-            }
-        }
     }
 }
