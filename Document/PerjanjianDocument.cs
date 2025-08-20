@@ -2165,7 +2165,6 @@ namespace pdfquestAPI.Documents
             {
                 var poin = children[i];
 
-                // Hasilkan nomor berdasarkan kedalaman (depth) dan indeks (i)
                 string numberLabel = GetNumberingLabel(depth, i);
 
                 // Render baris
@@ -2278,18 +2277,14 @@ namespace pdfquestAPI.Documents
 
         #region Appendix Rendering Methods
 
-    // Metode baru yang KHUSUS untuk membuat daftar dengan nomor a, b, c
-        // Metode baru yang KHUSUS untuk membuat daftar dengan nomor a, b, c
         void RenderListOtomatis(ColumnDescriptor column, List<PoinModel> items)
         {
             var orderedItems = items.OrderBy(p => p.UrutanTampil).ToList();
             
-            // Gunakan loop for untuk mendapatkan indeks (i)
             for (int i = 0; i < orderedItems.Count; i++)
             {
                 var poin = orderedItems[i];
                 
-                // Buat label huruf (a, b, c, ...) secara dinamis
                 string numberLabel = $"{(char)('a' + i)}."; 
                 
                 column.Item().PaddingLeft(20f).PaddingBottom(4).Row(row =>
@@ -2301,185 +2296,97 @@ namespace pdfquestAPI.Documents
             }
         }
 
-        // GANTI SELURUH METODE ComposeLampiran ANDA DENGAN YANG INI
-void ComposeLampiran(ColumnDescriptor column)
+void RenderPoinDanTabel(
+    ColumnDescriptor column,
+    List<PoinModel> allPoin,
+    int? parentId,
+    int depth,
+    bool forceSimpleNumbering = false)
 {
-    // Lakukan loop pada SEMUA lampiran
-    foreach (var lampiran in _model.Lampiran.OrderBy(l => l.UrutanTampil))
+    var children = allPoin
+        .Where(p => p.ParentId == parentId)
+        .OrderBy(p => p.UrutanTampil)
+        .ToList();
+
+    if (!children.Any()) return;
+
+    int itemCounter = 0;
+
+    for (int i = 0; i < children.Count; i++)
     {
-        column.Item().PageBreak();
-        column.Item().AlignLeft().Text(lampiran.JudulTeks).Bold().FontSize(14);
-        column.Item().PaddingBottom(20);
+        var poin = children[i];
+        var teks = poin.TeksPoin?.Trim() ?? string.Empty;
 
-        // Loop untuk setiap SubBab di dalam Lampiran
-        foreach (var subBab in lampiran.SubBab.OrderBy(s => s.UrutanTampil))
+        if (forceSimpleNumbering)
         {
-            // Tampilkan konten SubBab (misal: "RUANG LINGKUP DAN MEKANISME...")
-            if (!string.IsNullOrWhiteSpace(subBab.Konten))
+            column.Item().PaddingLeft(25f).PaddingBottom(5).Row(row =>
             {
-                column.Item().AlignLeft().Text(subBab.Konten).SemiBold();
-                column.Item().PaddingBottom(10);
-            }
-
-            // Jika ini BUKAN sub-bab yang perlu logika dinamis, render semua Poin-nya seperti biasa.
-            if (!subBab.Konten.Contains("RUANG LINGKUP DAN MEKANISME"))
+                row.Spacing(5);
+                row.ConstantItem(35).AlignTop().Text($"{i + 1}.");
+                row.RelativeItem().Text(teks).Justify();
+            });
+            itemCounter++;
+        }
+        else
+        {
+            float indent = 0;
+            switch(depth)
             {
-                if (subBab.Poin != null && subBab.Poin.Any())
-                {
-                    RenderPoinDanTabel(column, subBab.Poin, 0);
-                }
-                continue; // Lanjut ke sub-bab berikutnya
-            }
-
-            // =================================================================
-            // --- LOGIKA KHUSUS UNTUK SUB-BAB "RUANG LINGKUP DAN MEKANISME" ---
-            
-            // LANGKAH 1: Pisahkan semua Poin menjadi dua grup
-            var semuaPoin = subBab.Poin.OrderBy(p => p.UrutanTampil).ToList();
-            var poinRuangLingkup = new List<PoinModel>();
-            var poinPenjelasan = new List<PoinModel>();
-            bool isPenjelasanSection = false;
-
-            foreach (var poin in semuaPoin)
-            {
-                if (poin.TeksPoin.Contains("Penjelasan mekanisme"))
-                {
-                    isPenjelasanSection = true;
-                }
-                if (isPenjelasanSection) { poinPenjelasan.Add(poin); }
-                else { poinRuangLingkup.Add(poin); }
-            }
-
-            // LANGKAH 2: Buat "daftar layanan aktif" dari poinRuangLingkup
-            var daftarLayananAktif = new HashSet<string>(
-                poinRuangLingkup.Skip(1).Select(p => NormalisasiNamaLayanan(p.TeksPoin))
-            );
-
-            // LANGKAH 3: Render kedua bagian secara terkontrol
-
-            // Render bagian "Ruang Lingkup"
-            if (poinRuangLingkup.Any())
-            {
-                // Render judulnya ("1. Ruang lingkup...")
-                var judulRuangLingkup = poinRuangLingkup.First();
-                column.Item().AlignLeft().Text(judulRuangLingkup.TeksPoin); // Tidak perlu SemiBold karena sudah ada di RenderPoinDanTabel
-                column.Item().PaddingBottom(10);
-
-                // Render daftar layanannya (a, b, c, ...)
-                var daftarItem = poinRuangLingkup.Skip(1).ToList();
-                for (int i = 0; i < daftarItem.Count; i++)
-                {
-                    var poin = daftarItem[i];
-                    string numberLabel = $"{(char)('a' + i)}."; 
-                    
-                    column.Item().PaddingLeft(20f).PaddingBottom(4).Row(row =>
-                    {
-                        row.Spacing(5);
-                        row.ConstantItem(25).AlignTop().Text(numberLabel);
-                        row.RelativeItem().Text(poin.TeksPoin).Justify();
-                    });
-                }
+                case 0: indent = 0; break;      
+                case 1: indent = 0; break;      
+                case 2: indent = 21f; break;     
+                case 3: indent = 45f; break;     
+                default: indent = 65f; break;
             }
             
-            // Render bagian "Penjelasan" dengan FILTER
-            if (poinPenjelasan.Any())
+            if (teks.StartsWith("[TABLE]"))
             {
-                column.Item().Height(20); 
-                
-                var judulPenjelasan = poinPenjelasan.First();
-                column.Item().AlignLeft().Text(judulPenjelasan.TeksPoin);
-                column.Item().PaddingBottom(10);
-                
-                var tabelUntukDirender = new List<string>();
-                int penjelasanCounter = 1;
-                
-                foreach (var poin in poinPenjelasan.Skip(1))
+                RenderTabelBiasa(column, teks);
+                itemCounter++;
+            }
+            else if (teks.StartsWith("[HEADER]"))
+            {
+                var headerText = teks.Substring(8);
+                column.Item().PaddingBottom(5).Text(headerText).SemiBold();
+            }
+            else if (teks.StartsWith("[NOTE]"))
+            {
+                var noteText = teks.Substring(6); 
+                column.Item().PaddingTop(10).Text(noteText); 
+            }
+            else if (teks.StartsWith("-"))
+            {
+                column.Item().PaddingLeft(indent + 35f).PaddingBottom(5).Text(teks);
+            }
+            else
+            {
+                string numberLabel = "";
+                switch (depth)
                 {
-                    var match = Regex.Match(poin.TeksPoin, @"\[TABLE_SPECIAL\](.*?)\[/TABLE_SPECIAL\]", RegexOptions.Singleline);
-                    if (match.Success)
+                    case 0: numberLabel = ""; break;
+                    case 1: numberLabel = $"{itemCounter + 1}."; break;
+                    case 2: numberLabel = $"{itemCounter + 1}."; break; 
+                    case 3: numberLabel = $"{(char)('a' + itemCounter)}."; break;
+                    default: numberLabel = ""; break;
+                }
+                
+                column.Item().PaddingLeft(indent).PaddingBottom(5).Row(row =>
+                {
+                    row.Spacing(2); 
+                    if (!string.IsNullOrEmpty(numberLabel))
                     {
-                        string kontenTabel = match.Groups[1].Value.Trim();
-                        var parts = kontenTabel.Split(new[] { '|' }, 2);
-                        if (parts.Length == 2)
-                        {
-                            string judulTabel = NormalisasiNamaLayanan(parts[0]);
-                            if (daftarLayananAktif.Contains(judulTabel))
-                            {
-                                string kontenTabelBaru = $"{penjelasanCounter}. {parts[0].Trim()}|{parts[1]}";
-                                tabelUntukDirender.Add(kontenTabelBaru);
-                                penjelasanCounter++;
-                            }
-                        }
+                        row.ConstantItem(20).AlignTop().Text(numberLabel);
                     }
-                }
+                    row.RelativeItem().Text(teks).Justify();
+                });
                 
-                if (tabelUntukDirender.Any())
-                {
-                    RenderTabelKhususMenyatu(column, tabelUntukDirender);
-                }
+                itemCounter++;
             }
         }
+        
+        RenderPoinDanTabel(column, allPoin, poin.Id, depth + 1, false);
     }
 }
-
-      void RenderPoinDanTabel(ColumnDescriptor column, List<PoinModel> poinList, float initialIndent)
-        {
-            var orderedPoin = poinList.OrderBy(p => p.UrutanTampil).ToList();
-
-            for (int i = 0; i < orderedPoin.Count; i++)
-            {
-                var poin = orderedPoin[i];
-                var teks = poin.TeksPoin;
-
-                // Logika untuk menangani [TABLE_SPECIAL]
-                if (teks.Contains("[TABLE_SPECIAL]"))
-                {
-                    int tableTagIndex = teks.IndexOf("[TABLE_SPECIAL]");
-                    string prefix = teks.Substring(0, tableTagIndex).Trim();
-
-                    if (!string.IsNullOrEmpty(prefix))
-                    {
-                        column.Item().PaddingLeft(initialIndent).PaddingBottom(5).Text(prefix);
-                    }
-
-                    var specialTableRowsContent = new List<string>();
-                    int j = i;
-                    while (j < orderedPoin.Count && orderedPoin[j].TeksPoin.Contains("[TABLE_SPECIAL]"))
-                    {
-                        var currentTeks = orderedPoin[j].TeksPoin;
-                        var currentContentMatch = Regex.Match(currentTeks, @"\[TABLE_SPECIAL\](.*?)\[/TABLE_SPECIAL\]", RegexOptions.Singleline);
-                        if (currentContentMatch.Success)
-                        {
-                            specialTableRowsContent.Add(currentContentMatch.Groups[1].Value.Trim());
-                        }
-                        j++;
-                    }
-
-                    RenderTabelKhususMenyatu(column, specialTableRowsContent);
-                    i = j - 1;
-                }
-                // Logika untuk menangani [TABLE]
-                else if (teks.StartsWith("[TABLE]"))
-                {
-                    RenderTabelBiasa(column, teks);
-                }
-                // Logika untuk teks biasa (TANPA penomoran otomatis)
-                else
-                {
-                    // Kode ini hanya merender teks apa adanya dari database.
-                    // Jika ada "a." di database, ia akan tampil. Jika tidak, ia tidak akan tampil.
-                    float currentIndent = Regex.IsMatch(teks.Trim(), @"^[a-z]\.") ? initialIndent + 20f : initialIndent;
-                    column.Item().PaddingLeft(currentIndent).PaddingBottom(5).Text(teks);
-                }
-
-                // Logika untuk SubPoin
-                if (poin.SubPoin != null && poin.SubPoin.Any())
-                {
-                    RenderPoinDanTabel(column, poin.SubPoin, initialIndent + 20f);
-                }
-            }
-        }
-
         void RenderTabelBiasa(ColumnDescriptor column, string teks)
         {
             column.Item().PaddingTop(10).PaddingBottom(10).Table(table =>
@@ -2622,33 +2529,165 @@ void ComposeLampiran(ColumnDescriptor column)
 
             var cleanedText = teks.Replace('\u00A0', ' ');
 
-            // Bersihkan awalan nomor/huruf 
             cleanedText = Regex.Replace(cleanedText, @"^([a-zA-Z0-9]+\.|\d+\))\s*", "").Trim();
-
-            // Hapus teks di dalam kurung
             cleanedText = Regex.Replace(cleanedText, @"\s*\([^)]*\)", "").Trim();
-            
-            // Hapus kata "dan" di akhir 
             if (cleanedText.EndsWith(" dan", StringComparison.OrdinalIgnoreCase))
             {
                 cleanedText = cleanedText.Substring(0, cleanedText.Length - 4).Trim();
             }
 
-            // =================================================================
-            // --- PERBAIKAN: Hapus kata "PELAYANAN " jika ada di awal ---
             if (cleanedText.StartsWith("PELAYANAN ", StringComparison.OrdinalIgnoreCase))
             {
-                // Hapus 10 karakter pertama ("PELAYANAN ")
                 cleanedText = cleanedText.Substring(10).Trim();
             }
-            // =================================================================
-
-            // Hapus SEMUA karakter yang bukan huruf atau angka.
             cleanedText = Regex.Replace(cleanedText, @"[^a-zA-Z0-9]", "");
             
-            // Ubah ke huruf besar.
             return cleanedText.ToUpper();
         }
+
+
+void ComposeLampiran(ColumnDescriptor column)
+{
+    foreach (var lampiran in _model.Lampiran.OrderBy(l => l.UrutanTampil))
+    {
+        column.Item().PageBreak();
+        column.Item().AlignLeft().Text(lampiran.JudulTeks).Bold().FontSize(14);
+        column.Item().PaddingBottom(20);
+
+        foreach (var subBab in lampiran.SubBab.OrderBy(s => s.UrutanTampil))
+        {
+            if (!string.IsNullOrWhiteSpace(subBab.Konten))
+            {
+                column.Item().AlignLeft().Text(subBab.Konten).SemiBold();
+                column.Item().PaddingBottom(10);
+            }
+
+            if (!subBab.Konten.Contains("RUANG LINGKUP DAN MEKANISME"))
+            {
+                if (subBab.Poin != null && subBab.Poin.Any())
+                {
+                     RenderPoinDanTabel(column, subBab.Poin, null, 0);
+                }
+                continue; 
+            }
+            
+            var semuaPoin = subBab.Poin?.OrderBy(p => p.UrutanTampil)?.ToList() ?? new List<PoinModel>();
+            var poinRuangLingkup = new List<PoinModel>();
+            var poinPenjelasan = new List<PoinModel>();
+            bool isPenjelasanSection = false;
+
+            foreach (var poin in semuaPoin)
+            {
+                if (poin.TeksPoin.Contains("Penjelasan mekanisme")) { isPenjelasanSection = true; }
+                if (isPenjelasanSection) { poinPenjelasan.Add(poin); }
+                else { poinRuangLingkup.Add(poin); }
+            }
+
+            var daftarLayananAktif = new HashSet<string>(
+                poinRuangLingkup.Skip(1).Select(p => NormalisasiNamaLayanan(p.TeksPoin))
+            );
+
+            if (poinRuangLingkup.Any())
+            {
+                var judulRuangLingkup = poinRuangLingkup.First();
+                column.Item().AlignLeft().Text(judulRuangLingkup.TeksPoin).SemiBold(); // Dibuat SemiBold agar konsisten
+                column.Item().PaddingBottom(10);
+
+                var daftarItem = poinRuangLingkup.Skip(1).ToList();
+                for (int i = 0; i < daftarItem.Count; i++)
+                {
+                    var poin = daftarItem[i];
+                    string numberLabel = $"{(char)('a' + i)}."; 
+                    
+                    column.Item().PaddingLeft(20f).PaddingBottom(4).Row(row =>
+                    {
+                        row.Spacing(5);
+                        row.ConstantItem(25).AlignTop().Text(numberLabel);
+                        row.RelativeItem().Text(poin.TeksPoin).Justify();
+                    });
+                }
+            }
+            
+            if (poinPenjelasan.Any())
+            {
+                column.Item().Height(20); 
+                
+                var judulPenjelasan = poinPenjelasan.First();
+                column.Item().AlignLeft().Text(judulPenjelasan.TeksPoin).SemiBold(); 
+                column.Item().PaddingBottom(10);
+                
+                var tabelUntukDirender = new List<string>();
+                int penjelasanCounter = 1;
+                
+                foreach (var poin in poinPenjelasan.Skip(1))
+                {
+                    var match = Regex.Match(poin.TeksPoin, @"\[TABLE_SPECIAL\](.*?)\[/TABLE_SPECIAL\]", RegexOptions.Singleline);
+                    if (match.Success)
+                    {
+                        string kontenTabel = match.Groups[1].Value.Trim();
+                        var parts = kontenTabel.Split(new[] { '|' }, 2);
+                        if (parts.Length == 2)
+                        {
+                            string judulTabel = NormalisasiNamaLayanan(parts[0]);
+                            if (daftarLayananAktif.Contains(judulTabel))
+                            {
+                                string kontenTabelBaru = $"{penjelasanCounter}. {parts[0].Trim()}|{parts[1]}";
+                                tabelUntukDirender.Add(kontenTabelBaru);
+                                penjelasanCounter++;
+                            }
+                        }
+                    }
+                }
+                
+                if (tabelUntukDirender.Any())
+                {
+                    RenderTabelKhususMenyatu(column, tabelUntukDirender);
+                }
+            }
+        }
+    }
+}  
+   
+void ComposeLampiranTarif(ColumnDescriptor column, BabModel lampiran)
+{
+    var semuaPoin = lampiran.SubBab.SelectMany(sb => sb.Poin).ToList();
+    RenderPoinTarifHierarkis(column, semuaPoin, null, 0, 0);
+}
+
+void RenderPoinTarifHierarkis(ColumnDescriptor column, List<PoinModel> allPoin, int? parentId, int depth, float indent)
+{
+    var children = allPoin
+        .Where(p => p.ParentId == parentId)
+        .OrderBy(p => p.UrutanTampil)
+        .ToList();
+
+    if (!children.Any()) return;
+
+    for (int i = 0; i < children.Count; i++)
+    {
+        var poin = children[i];
+        string numberLabel = "";
+
+        switch (depth)
+        {
+            case 0: // Level 1 -> 1., 2.
+                numberLabel = $"{i + 1}.";
+                break;
+            case 1: // Level 2 -> a., b.
+                numberLabel = $"{(char)('a' + i)}.";
+                break;
+        }
+        
+        column.Item().PaddingLeft(indent).PaddingBottom(5).Row(row =>
+        {
+            row.Spacing(5);
+            row.ConstantItem(35).AlignTop().Text(numberLabel);
+            row.RelativeItem().Text(poin.TeksPoin);
+        });
+
+        RenderPoinTarifHierarkis(column, allPoin, poin.Id, depth + 1, indent + 20f);
+    }
+}
         #endregion
     }
     
